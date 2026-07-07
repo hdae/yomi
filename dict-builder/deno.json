@@ -1,0 +1,15 @@
+{
+  "//": "@hdae/yomi の辞書ビルダ（naist-jdic CSV → JTD1）。開発時/CI 専用で JSR 公開しない（name/exports なし）。",
+  "tasks": {
+    "fetch-dict": "deno run -A src/fetch_dict.ts",
+    "build-dict": "deno run -A src/build.ts"
+  },
+  "imports": {
+    "@hdae/yomi": "../src/mod.ts"
+  },
+  "fmt": {
+    "lineWidth": 100,
+    "proseWrap": "preserve",
+    "exclude": ["**/*.md"]
+  }
+}

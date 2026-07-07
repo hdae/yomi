@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# 読み取りのみ（checkout）。write は付与しない＝最小権限。
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      # 依存ゼロ・型・整形・lint（辞書不要のレイヤ）。
+      - run: deno fmt --check
+      - run: deno lint
+      - run: deno check .
+
+      # 辞書ソース（naist-jdic v0.1.3, ~19MB）を Actions Cache に保存し、GitHub からの
+      # 再ダウンロードを避ける。key は fetch_dict.ts のハッシュ＝SHA-256 pin が変われば自動失効。
+      # ヒット時も後段の fetch_dict が checksum を再検証するので破損は self-healing（再取得）。
+      - name: Cache naist-jdic source
+        uses: actions/cache@v4
+        with:
+          path: data/naist-jdic
+          key: naist-jdic-${{ hashFiles('dict-builder/src/fetch_dict.ts') }}
+
+      # 統合テスト用に辞書 JTD1 を生成（naist-jdic v0.1.3・ADR-0003）。
+      # これが無いと統合テストは skip される（黙って緑にはしない設計）。
+      - name: Build naist-jdic dictionary
+        run: |
+          deno run -A dict-builder/src/fetch_dict.ts
+          deno task build-dict
+
+      - name: Test (unit + integration)
+        run: deno test --allow-read --allow-env

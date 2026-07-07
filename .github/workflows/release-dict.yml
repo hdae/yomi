@@ -1,0 +1,66 @@
+name: Release (dictionary)
+
+# GitHub Release を publish すると、naist-jdic から辞書 JTD1 を再生成して
+# その Release にアセット添付する（ADR-0010）。JSR publish は release-jsr.yml が担い、
+# permission を分離する（この job は contents:write のみ・id-token は持たない＝最小権限）。
+#
+# タグ規約: Release の tag は v プレフィックス付きで deno.jsonc の version に一致させる（例: v0.1.0, ADR-0010 tag v*）。
+#           アセット名は bare version（naist-jdic-<version>.jtd）＝JSR 公開版・ブラウザヘルパの想定と揃える。
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write # Release アセットのアップロードのみ。
+
+jobs:
+  dict:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      # タグ（v プレフィックス）== deno.jsonc.version を fail-loud 検証し、bare version を解決する。
+      # verify_tag.ts は成功時に bare version を stdout に出す＝後段のアセット名に無変換で使える。
+      # --no-lock: jsr import で deno.lock を working tree に書かせない（gitignore 済みだが二重防御）。
+      - name: Verify release tag and resolve version
+        id: ver
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          VERSION="$(deno run --no-lock --allow-read scripts/verify_tag.ts "$TAG")"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      # 辞書ソースをキャッシュ（ci.yml と同じ key）。ヒット時 fetch は checksum 再検証のみ。
+      - name: Cache naist-jdic source
+        uses: actions/cache@v4
+        with:
+          path: data/naist-jdic
+          key: naist-jdic-${{ hashFiles('dict-builder/src/fetch_dict.ts') }}
+
+      # 辞書生成（naist-jdic v0.1.3・SHA-256 固定）。build 内で各セクション CRC を計算し
+      # JTD1 の META に埋め込む＝生成物は整合。
+      # TODO: fetch_dict.ts の SOURCE_URL が到達不能になった場合はミラー URL を ADR で確定して差し替える。
+      - name: Build naist-jdic dictionary (JTD1)
+        run: |
+          deno run -A dict-builder/src/fetch_dict.ts
+          deno task build-dict
+
+      # 生成物を magic + 全セクション CRC + サイズ下限で検証（壊れていれば fail loud）。
+      - name: Verify JTD1 (magic / crc / size)
+        run: deno run --allow-read scripts/verify_jtd.ts fixtures/naist-jdic.jtd
+
+      # bare version のアセット名で添付（loadDictionary の既定 URL naist-jdic-<version>.jtd に一致）。
+      # tag は v プレフィックス（v0.1.0）だが、アセット名は verify_tag が解決した bare version（0.1.0）を使う。
+      # コピー先 naist-jdic-*.jtd は gitignore 済み＝working tree を汚さない。
+      - name: Upload dictionary asset to release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name }}
+          VERSION: ${{ steps.ver.outputs.version }}
+        run: |
+          test -f fixtures/naist-jdic.jtd
+          cp fixtures/naist-jdic.jtd "naist-jdic-${VERSION}.jtd"
+          gh release upload "$TAG" "naist-jdic-${VERSION}.jtd" --clobber

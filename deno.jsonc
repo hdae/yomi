@@ -1,0 +1,46 @@
+{
+  "name": "@hdae/yomi",
+  "version": "0.1.0",
+  // 公開 API。コア（.）はモデル非依存。SBV2 変換は /sbv2、ブラウザ辞書ヘルパは /browser に分離（ADR-0010）。
+  "exports": {
+    ".": "./src/mod.ts",
+    "./sbv2": "./src/sbv2.ts",
+    "./browser": "./src/browser/mod.ts"
+  },
+  "tasks": {
+    "check": "deno fmt --check && deno lint && deno check . && deno test --allow-read --allow-env",
+    // --allow-read: version 焼き込みの drift ガード(version_sync)と実辞書統合テストが読取に使う
+    //   （辞書 fixture が無ければ統合テストは skip・ci.yml と同じ権限）。--allow-env: YOMI_DICT_PATH 用。
+    "test": "deno test --allow-read --allow-env",
+    "fmt": "deno fmt",
+    // naist-jdic → JTD1 を生成し fixtures/naist-jdic.jtd に出力（統合テストの既定辞書）。
+    "build-dict": "deno run -A dict-builder/src/build.ts",
+    // version を bump（例: deno task bump patch）。組込み deno bump-version で deno.jsonc の version を
+    // 更新し、焼き込み src/constants.ts も同じ版へ surgical 更新して、2ファイルを1コミットにする（tag/push はしない）。
+    "bump": "deno run --allow-read --allow-run=deno,git --allow-write=src/constants.ts --no-lock scripts/bump.ts"
+  },
+  "imports": {
+    "@hdae/yomi": "./src/mod.ts",
+    // dev/CI 用（scripts/ の deno.jsonc 解析）。配布パッケージ src/ は import しない＝実行時依存ゼロは不変。
+    "@std/jsonc": "jsr:@std/jsonc@^1.0.2"
+  },
+  "fmt": {
+    "lineWidth": 100,
+    "proseWrap": "preserve",
+    "exclude": ["**/*.md"]
+  },
+  "lint": {
+    "exclude": ["fixtures/"]
+  },
+  "publish": {
+    // テスト・テスト専用ヘルパ・辞書バイナリ・golden は配布物に含めない。
+    "include": ["src/", "deno.jsonc", "README.md", "LICENSE", "NOTICE"],
+    "exclude": ["src/**/*.test.ts", "src/_dict_path.ts"]
+  },
+  // dict-builder（辞書ビルダ）・生成物・辞書データはパッケージの check/test/fmt/lint 対象外。
+  "exclude": [
+    "dict-builder/",
+    "fixtures/",
+    "data/"
+  ]
+}

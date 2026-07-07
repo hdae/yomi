@@ -1,0 +1,27 @@
+# Deno
+# https://deno.com/
+
+# Cache directory (when using project-local DENO_DIR)
+# https://docs.deno.com/runtime/fundamentals/setup/#deno_dir
+.deno/
+
+# Coverage reports
+# https://docs.deno.com/runtime/reference/cli/coverage/
+coverage/
+*.lcov
+
+# 実行時依存ゼロ（MUST）なのでロックする本物の依存が無い。deno が jsr import を含む
+# コマンド（CI の version チェック eval 等）で生成する deno.lock は CI 便宜の副産物にすぎず、
+# 追跡すると release-jsr の publish 直前に working tree を汚して dirty で落ちる原因になる。
+deno.lock
+
+# 辞書ソース（naist-jdic CSV, BSD-3）とビルド生成物は同梱しない（ADR-0010）。
+# fetch_dict.ts で取得・build-dict で生成する。
+data/
+
+# 生成される JTD1 辞書（~19MB, Release アセット配布）。golden-3k.jsonl は committed。
+fixtures/naist-jdic.jtd
+
+# Release ワークフローがアセット名（naist-jdic-<version>.jtd）に合わせて repo 直下に作る
+# versioned コピー。これを無視しないと deno publish が dirty working tree で落ちる。
+/naist-jdic-*.jtd

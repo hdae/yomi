@@ -1,0 +1,25 @@
+NOTICE — @hdae/yomi
+
+This package's source code is licensed under the MIT License (see LICENSE).
+
+The Japanese dictionary asset it consumes, naist-jdic (built into the JTD1
+`naist-jdic-<version>.jtd` distributed as a GitHub Release asset, NOT bundled in
+this package), is licensed separately under the BSD 3-Clause License. When you
+redistribute the dictionary asset, you must retain the following copyright
+notices. The full COPYING text is embedded in the JTD1 container's META section
+and is also available from the naist-jdic source below.
+
+Dictionary source: jpreprocess/naist-jdic, tag v0.1.3
+  https://github.com/jpreprocess/naist-jdic
+
+naist-jdic BSD 3-Clause copyright holders:
+
+  Copyright (c) 2009, Nara Institute of Science and Technology (NAIST), Japan.
+  Copyright (c) 2011-2017, The UniDic Consortium.
+  Copyright (c) 2008-2016, Nagoya Institute of Technology.
+  Copyright (c) 2023, JPreprocess Team.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the conditions of the BSD 3-Clause
+License are met, including retention of the above copyright notices and this
+list of conditions, and the disclaimer of warranties.

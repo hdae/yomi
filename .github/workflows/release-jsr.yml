@@ -1,0 +1,37 @@
+name: Release (JSR)
+
+# GitHub Release を publish すると @hdae/yomi を JSR に publish する（ADR-0010）。
+# 辞書ビルドは release-dict.yml が担い、permission を分離する（この job は checkout(read)+OIDC(id-token)のみ）。
+# この job は生成物を作らないので working tree は clean のまま＝--allow-dirty は不要。
+#
+# タグ規約: Release の tag は v プレフィックス付きで deno.jsonc の version に一致させる（例: v0.1.0, ADR-0010 tag v*）。
+on:
+  release:
+    types: [published]
+
+# JSR publish の canonical 権限セット。contents:read は actions/checkout 用（public では既定で付くが、
+# private 化しても壊れないよう明示）。id-token:write は JSR の OIDC publish 用。
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      # タグ（v プレフィックス）== deno.jsonc.version を fail-loud 検証。tag と publish される version の乖離を防ぐ。
+      # --no-lock は必須: これが無いと jsr import が deno.lock を生成し、直後の deno publish が dirty で落ちる。
+      - name: Verify release tag matches deno.jsonc version
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+        run: deno run --no-lock --allow-read scripts/verify_tag.ts "$TAG"
+
+      # JSR publish（OIDC）。辞書は同梱しない別成果物なので独立に publish する。
+      # --allow-dirty は付けない（この job は生成物を作らず tree は clean）。
+      - name: Publish to JSR
+        run: deno publish
