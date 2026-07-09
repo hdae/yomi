@@ -32,7 +32,7 @@ jobs:
           path: data/naist-jdic
           key: naist-jdic-${{ hashFiles('dict-builder/src/fetch_dict.ts') }}
 
-      # 統合テスト用に辞書 JTD1 を生成（naist-jdic v0.1.3・ADR-0003）。
+      # 統合テスト用に辞書 JTD1 を生成（naist-jdic v0.1.3・fetch_dict.ts で SHA-256 pin）。
       # これが無いと統合テストは skip される（黙って緑にはしない設計）。
       - name: Build naist-jdic dictionary
         run: |

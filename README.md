@@ -68,28 +68,28 @@ console.log(analyze(dict, "音声合成のテストを行います。"));
 
 ## 辞書の配布とキャッシュ
 
-辞書 `naist-jdic.jtd`（JTD1 バイナリ）はパッケージに同梱せず、実行時に取得します。既定の取得元は
-**Hugging Face**（`hdae/yomi-dict` dataset。GitHub の CORS 制約を避けるため）。`@hdae/yomi/browser` の
-`getDictionary` は辞書を **Cache API** に保存し、取得したバイト列を JTD1 の magic とセクション CRC で
-整合性検証してから `JtdDictionary` を返します（破損は throw＝fail loud）。破損キャッシュは真実源
-（network）から取り直します（self-heal）。
+辞書はパッケージに同梱せず、実行時に取得します。既定の取得元は **Hugging Face**（`hdae/yomi-dict`
+dataset。GitHub の CORS 制約を避けるため）で、**gzip 版**（~6.4MB）を取得し `DecompressionStream` で
+解凍します。`@hdae/yomi/browser` の `getDictionary` は取得結果を **Cache API** に保存し、解凍後のバイト列を
+JTD1 の magic とセクション CRC で整合性検証してから `JtdDictionary` を返します（破損は throw＝fail loud）。
+破損・解凍失敗キャッシュは真実源（network）から取り直します（self-heal）。
 
-既定では、このパッケージ自身の版に対応する辞書を取得します（版をコードに焼き込み済み＝コードと辞書の版が
-常に一致し再現性が保たれる）。版固定＝不変なので、次回以降はネットワークなしでキャッシュから返します。
+辞書はパッケージ版と独立に更新されるため、既定の取得は**辞書リポジトリのコミット**（`revision`）で固定します
+（コードに焼き込み済み＝immutable・再現性）。固定＝不変なので、次回以降はネットワークなしでキャッシュから返します。
 
 ```typescript
 import { fetchDictionaryBytes, getDictionary } from "@hdae/yomi/browser";
 
-// 既定: 自身の版の辞書を JtdDictionary で取得（推奨・1ステップ）
+// 既定: 焼き込み revision の辞書を JtdDictionary で取得（推奨・1ステップ）
 const dict = await getDictionary();
 
-// 明示的に版や取得元を指定する場合（mirror / 自ホスト等）
+// 明示的に revision や取得元を指定する場合（mirror / 自ホスト等）
 const other = await getDictionary({
-  version: "0.1.0", // 既定 = パッケージ自身の版
-  url: "https://example.com/naist-jdic-{version}.jtd", // {version} は取得時に置換
+  revision: "main", // 既定 = パッケージに焼き込んだ辞書コミット
+  url: "https://example.com/naist-jdic-{revision}.jtd.gz", // {revision} は取得時に置換
 });
 
-// バイト列が要る場合（Worker 転送・独自キャッシュ等）は fetchDictionaryBytes（検証済み）
+// バイト列が要る場合（Worker 転送・独自キャッシュ等）は fetchDictionaryBytes（検証済みの生 JTD1）
 const bytes = await fetchDictionaryBytes();
 ```
 

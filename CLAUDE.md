@@ -9,7 +9,7 @@
 
 ## ドキュメント索引
 
-- [docs/decisions/](docs/decisions/) — ADR（`0001` = 中立コア方針 / `0002` = 公開APIの面）
+- [docs/decisions/](docs/decisions/) — ADR（`0001` = 中立コア方針 / `0002` = 公開APIの面 / `0003` = 辞書配布(HF/gzip)）
 - [docs/jtd1-format.md](docs/jtd1-format.md) — 辞書バイナリ JTD1 のフォーマット仕様
 - 分かち書きの詳細互換仕様（lindera/jpreprocess のオラクル精査）や G2P の設計背景は、研究リポジトリ
   `../browser-tts`（`docs/tokenizer-compat.md` ほか）を参照。
@@ -54,14 +54,14 @@
 
 ## 進行中の計画
 
-- **リリース**: v0.1.0 は JSR 公開済み。以降の破壊的変更（SBV2削除・`/format`分離・ドメイン別サブパス
-  再編＝[0002](docs/decisions/0002-public-api-surface.md)）は **v0.2.0** に束ねる。**辞書データのアップロード
-  （HF 配布）完了後に release** する方針＝それまで `deno task bump` しない。
-- **辞書配布(HF)**: コード側は完了 — `loadDictionary`→`getDictionary`（`JtdDictionary` を返す）＋
-  下位 `fetchDictionaryBytes`（検証済み bytes）、`DEFAULT_URL` を HF dataset へ、
-  [release-dict.yml](.github/workflows/release-dict.yml) を HF アップロードへ。**残りはオーナー作業**＝
-  HF dataset `hdae/yomi-dict` 作成・`HF_TOKEN`(write) を GitHub secret 登録・初回 `.jtd` アップロード。
-  完了後に v0.2.0 を release。
-- **その後**: フォーマット軽量化（転送 gzip＋オンディスク再エンコード）。
+- **辞書配布(HF)**: 完了（[docs/decisions/0003](docs/decisions/0003-dict-distribution.md)）。辞書は HF dataset
+  `hdae/yomi-dict` にアップロード済み（`.jtd` と gzip 版）。`getDictionary`（`JtdDictionary` を返す）＋下位
+  `fetchDictionaryBytes`（検証済み生 bytes）、**gzip 優先取得＋先頭バイト自動解凍**（`DecompressionStream`）、
+  取得は**辞書リポのコミット SHA で固定**（`DEFAULT_REVISION`、パッケージ版と独立）。Actions での辞書処理は
+  廃止（`release-dict.yml` 削除）。辞書差し替え時のみ hf CLI で上げ直し `DEFAULT_REVISION` を更新する。
+- **リリース**: v0.1.0 は JSR 公開済み。破壊的変更（SBV2削除・`/format`分離・ドメイン別サブパス再編＝
+  [0002](docs/decisions/0002-public-api-surface.md)・HF配布/gzip=[0003](docs/decisions/0003-dict-distribution.md)）は
+  **v0.2.0** に束ねる。HF 配布は完了したので、**v0.2.0 を release 可**（`deno task bump` → tag → GitHub Release）。
+- **その後（任意）**: 辞書のオンディスク再エンコードでさらに軽量化（CONN 行 dedup・LEXI delta+varint・READ かなパック）。
 - **後回し**: 辞書ソースの pyopenjtalk-plus 化（naist-jdic 系統・BSD-3・品質改善＋大規模化）。採用時は
   golden を pyopenjtalk-plus オラクルで再生成する。

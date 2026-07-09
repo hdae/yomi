@@ -5,6 +5,6 @@
  * 手動編集しないこと。`deno task bump` が deno.jsonc と同時にこの VERSION を surgical 更新し（同一コミット）、
  * リリース時は scripts/verify_tag.ts が、通常時は scripts/version_sync.test.ts が
  * 公開 VERSION === deno.jsonc.version を fail-loud で検証する（drift 検出）。
- * loadDictionary() が既定でこの版の辞書を取得するため、コードと辞書の版が常に一致する。
+ * （辞書はパッケージ版と独立に HF コミットで固定する＝browser の DEFAULT_REVISION。docs/decisions/0003）
  */
 export const VERSION = "0.1.0";

@@ -1,10 +1,10 @@
 name: Release (JSR)
 
-# GitHub Release を publish すると @hdae/yomi を JSR に publish する（ADR-0010）。
-# 辞書ビルドは release-dict.yml が担い、permission を分離する（この job は checkout(read)+OIDC(id-token)のみ）。
-# この job は生成物を作らないので working tree は clean のまま＝--allow-dirty は不要。
+# GitHub Release を publish すると @hdae/yomi を JSR に publish する。
+# この job は checkout(read)+OIDC(id-token) のみ・生成物を作らないので tree は clean（--allow-dirty 不要）。
+# 辞書は JSR パッケージに同梱せず Hugging Face で別配布する（GitHub Actions では辞書を扱わない）。
 #
-# タグ規約: Release の tag は v プレフィックス付きで deno.jsonc の version に一致させる（例: v0.1.0, ADR-0010 tag v*）。
+# タグ規約: Release の tag は v プレフィックス付きで deno.jsonc の version に一致させる（例: v0.1.0）。
 on:
   release:
     types: [published]
