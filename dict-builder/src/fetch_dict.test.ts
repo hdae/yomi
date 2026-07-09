@@ -32,9 +32,11 @@ Deno.test("parseArgs", async (t) => {
   });
 });
 
-Deno.test("SHA-256 チェックサム検証ロジック", async (t) => {
-  // fetch_dict.ts 内の非公開関数と同一アルゴリズム（Web Crypto API の SHA-256）を
-  // 使って、既知の入力に対する挙動・改竄検知の性質を確認する。
+Deno.test("SHA-256 前提確認（Web Crypto API の決定性・改竄検知）", async (t) => {
+  // NOTE: これは fetch_dict.ts のコードを呼ばない。fetch_dict.ts の sha256Hex は非公開かつ
+  // ネットワーク/FS 依存の経路内にあるため、ここでは同一アルゴリズム（Web Crypto の SHA-256）を
+  // テスト内に再実装し、ピン留め検証が依拠する「前提」だけを確認する
+  // （fetch_dict.ts 本体のダウンロード・配置ロジックは意図的にテスト対象外）。
   async function sha256Hex(data: Uint8Array<ArrayBuffer>): Promise<string> {
     const digest = await crypto.subtle.digest("SHA-256", data);
     return Array.from(new Uint8Array(digest))
