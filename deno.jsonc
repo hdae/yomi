@@ -45,10 +45,12 @@
     "include": ["src/", "deno.jsonc", "README.md", "LICENSE", "NOTICE"],
     "exclude": ["src/**/*.test.ts", "src/_dict_path.ts"]
   },
-  // dict-builder（辞書ビルダ）・生成物・辞書データはパッケージの check/test/fmt/lint 対象外。
+  // dict-builder（辞書ビルダ）・生成物・辞書データ・レビュー成果物はパッケージの check/test/fmt/lint 対象外。
+  // NOTE: fmt/lint の glob `**` はドット始まりディレクトリに合致しないため .claude/ は明示除外が必要。
   "exclude": [
     "dict-builder/",
     "fixtures/",
-    "data/"
+    "data/",
+    ".claude/"
   ]
 }
