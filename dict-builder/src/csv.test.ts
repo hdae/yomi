@@ -65,6 +65,17 @@ Deno.test("数値列: 整数にならない値（NaN/小数）はパース境界
   assert(threw, "cost=1.5（非整数）で throw しない");
 });
 
+Deno.test("複合語行: 非最終セグメントが空だと throw（surfLen=0 センチネルとの衝突を弾く）", () => {
+  // 実長 0 の surfLen が「残り全部」センチネルと二義になる入力は書き込み前に拒否する。
+  let threw = false;
+  try {
+    parseCsvLine("あい,1345,1345,49,名詞,一般,*,*,*,*,あ::い,ア::イ,ア::イ,0:0:0,C1", 1);
+  } catch {
+    threw = true;
+  }
+  assert(threw, "空の非最終セグメントで throw しない");
+});
+
 Deno.test("char.def: 範囲行の出現順どおりの順序付きカテゴリ列（lindera lookup_categories 互換）", () => {
   const def = parseCharDef(`
 DEFAULT 0 1 0  # コメント

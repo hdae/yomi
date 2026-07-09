@@ -90,12 +90,20 @@ export const parseCsvLine = (line: string, lineNo: number): LexicalEntry => {
     if (origs.length !== prons.length || origs.length !== accs.length) {
       throw new Error(`${lineNo}行目: ':' 分割数が orig/pron/acc で不一致`);
     }
-    units = origs.map((o, i) => ({
-      // 表層は orig セグメント長で分割する（最終ユニットは残り全部 = 0）。
-      surfLen: i === origs.length - 1 ? 0 : o.length,
-      pron: prons[i],
-      accType: parseAccType(accs[i]),
-    }));
+    units = origs.map((o, i) => {
+      const isLast = i === origs.length - 1;
+      // surfLen=0 は「残り全部」センチネル（最終ユニット専用）。非最終セグメントが
+      // 空だと実長 0 がセンチネルと衝突し、読み手（tokenizer）が残り全部を1ユニットに
+      // 吸って以降を壊す。二義を作る入力はここで弾く（fail loudly）。
+      if (!isLast && o.length === 0) {
+        throw new Error(`${lineNo}行目: orig の非最終セグメントが空: ${orig}`);
+      }
+      return {
+        surfLen: isLast ? 0 : o.length,
+        pron: prons[i],
+        accType: parseAccType(accs[i]),
+      };
+    });
   } else {
     units = [{ surfLen: 0, pron: f[COL.PRON], accType: parseAccType(f[COL.ACC]) }];
   }
