@@ -75,6 +75,10 @@ unitPronOffset : u32[U]   READ プールへのオフセット
 unitPronLen    : u8[U]
 ```
 
+NOTE: 上の2ブロックは**論理説明**（役割ごとのグルーピング）。物理配置は要素サイズ降順
+（u32 群 → u16 群 → u8 群）でパディングを最小化しており、実際の並びは `layout.ts` の
+`LEXI_LAYOUT.arrays` 宣言順が normative（フィールド名も同宣言に従う。例: `chainRuleId`）。
+
 v1 で持たない列（必要になった時点で fail loudly → 列追加）: 読み（col12。TTS実使用は
 col13発音形のみ）、原形、活用の細部（posTable のタプルに含む）。
 
@@ -86,9 +90,13 @@ col13発音形のみ）、原形、活用の細部（posTable のタプルに含
 ### CONN — 連接コスト行列 (encoding 0: i16 素置き)
 
 ```
-leftSize u32 = 1377, rightSize u32 = 1377
-data : i16[1377×1377]   cost = data[prevRightId * 1377 + nextLeftId]
+rightSize u32 = 1377, leftSize u32 = 1377   （ヘッダのバイト格納順もこの順）
+data : i16[rightSize×leftSize]   cost = data[prevRightId * leftSize + nextLeftId]
 ```
+
+NOTE: naist-jdic では両次元とも 1377 で対称に見えるが、ヘッダ順は `layout.ts` の
+`CONN_LAYOUT.header = ["rightSize", "leftSize"]` が normative。第三者実装はこの順で読むこと
+（転置しても次元が等しい間は検出できないため、明示しておく）。
 
 MUST: ID 0 は BOS/EOS。CSV の文脈IDは 1..1376（オフバイワン注意）。生 3.79MB。
 （A/B候補: 行クラスタリング/重複行共有 = Vibrato 方式）
