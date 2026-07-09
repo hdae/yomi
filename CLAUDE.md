@@ -35,6 +35,9 @@
 
 - **中立コア／モデルアダプタは持たない**（[docs/decisions/0001](docs/decisions/0001-neutral-core-no-model-adapters.md)）。
   中立リクエストは実装＋export、モデル固有（SBV2 等の音素・トーン梱包）は呼び出し側で組む。
+- **公開 API は最小に保つ**。`.` は G2P に必要な面（`analyze` / `JtdDictionary` / 出力型 / overlay /
+  中立建材 `moraToPhones`・`moraTones`・`pausePunct`）に限定。低レベル内部（NJD/lattice/tokenizer 等）は
+  非公開で、必要になり次第 export する（v1前・破壊的変更可）。JTD1 コーデックは `/format` に分離。
 - **実行時依存ゼロ（MUST）**は配布パッケージ `src/` に限定。`scripts/`・`dict-builder/` は dev/CI 用で対象外。
 - 辞書CSVの列参照は必ず名前付き定数経由（col13=発音 と col12=読み の取り違えが最悪の事故。TTS が
   使うのは col13 発音形）。col14=アクセント型 / col15=結合規則。matrix.def / 文脈IDは 0..1376 の
@@ -43,9 +46,14 @@
   fail loudly**（辞書フォーマットは formatVersion を上げて作り直す）。
 - ドキュメント言語: README・コード doc は日本語。GitHub/JSR の Description は英語（国際的な入口）。
 
-## 進行中の検討（未着手）
+## 進行中の計画
 
-- 辞書ソースの pyopenjtalk-plus 化（naist-jdic 系統・BSD-3・品質改善＋大規模化オプション）。採用時は
-  golden を pyopenjtalk-plus オラクルで再生成する。優先度は低め。
-- 配布の HuggingFace 移行（GitHub の CORS 回避）と `loadDictionary`→`getDictionary` 改名。
-- フォーマット軽量化（転送 gzip＋オンディスク再エンコード）。
+- **リリース**: v0.1.0 は JSR 公開済み。以降の破壊的変更（SBV2削除・`/format`分離・公開API最小化）は
+  **v0.2.0** に束ねる。**辞書データのアップロード（HF 配布）完了後に release** する方針＝それまで
+  `deno task bump` しない。
+- **次**: 配布の HuggingFace 移行（GitHub の CORS 回避。`hdae/yomi-dict` に `.jtd` をアップロード、
+  `DEFAULT_URL` と [release-dict.yml](.github/workflows/release-dict.yml) を HF へ）と
+  `loadDictionary`→`getDictionary` 改名。
+- **その後**: フォーマット軽量化（転送 gzip＋オンディスク再エンコード）。
+- **後回し**: 辞書ソースの pyopenjtalk-plus 化（naist-jdic 系統・BSD-3・品質改善＋大規模化）。採用時は
+  golden を pyopenjtalk-plus オラクルで再生成する。
