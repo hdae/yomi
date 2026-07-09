@@ -11,7 +11,7 @@
 import { pausePunct, wordPhoneAlignment } from "./word_alignment.ts";
 import { moraToPhones } from "./phonemes.ts";
 import { JtdDictionary } from "../dict/dictionary.ts";
-import { analyze } from "../analyze.ts";
+import { analyze, analyzeWithWords } from "../analyze.ts";
 import { analyzeToNodes } from "../njd/frontend.ts";
 import { dictAvailable, dictPath } from "../_dict_path.ts";
 
@@ -120,6 +120,27 @@ Deno.test({
       const align = wordPhoneAlignment(nodes);
       if (align.length === 0) continue;
       assertEq(align.at(-1)!.phones, ["."], `[${text}] 末尾は文末 long の '.'`);
+    }
+  },
+});
+
+// analyzeWithWords（シュガー）は、1解析で result（=analyze 相当）と words
+// （=wordPhoneAlignment(analyzeToNodes) 相当）を返す。分離経路で組んだ結果と
+// 完全一致することを表明し、シュガーが二経路から乖離しないことを守る。
+Deno.test({
+  name:
+    "analyzeWithWords(実辞書): result==analyze かつ words==wordPhoneAlignment（1解析・分離経路と一致）",
+  ignore: !dictExists,
+  fn() {
+    const dict = loadDict();
+    for (const text of CORPUS) {
+      const combined = analyzeWithWords(dict, text);
+      assertEq(combined.result, analyze(dict, text), `[${text}] result が analyze と不一致`);
+      assertEq(
+        combined.words,
+        wordPhoneAlignment(analyzeToNodes(dict, text)),
+        `[${text}] words が wordPhoneAlignment と不一致`,
+      );
     }
   },
 });
