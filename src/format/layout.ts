@@ -136,6 +136,10 @@ export const decodeSection = (
   length: number,
   layout: SectionLayout,
 ): DecodedSection => {
+  // ヘッダ列を読む前に、ヘッダ自体が収まる長さかを明示メッセージで検証する（生 RangeError 防止）。
+  if (length < layout.header.length * 4) {
+    throw new Error(`セクション実長 ${length} がヘッダ ${layout.header.length * 4}B より短い`);
+  }
   const dv = new DataView(buffer, offset, length);
   const scalars: Record<string, number> = {};
   layout.header.forEach((name, i) => {
@@ -143,8 +147,10 @@ export const decodeSection = (
   });
 
   const plan = computeLayout(layout, scalars);
-  if (plan.totalBytes > length) {
-    throw new Error(`セクション実長 ${length} がレイアウト要求 ${plan.totalBytes} より短い`);
+  // 正常な書き手は totalBytes 丁度を書く。短い（切り詰め）だけでなく長い（length 誤計算・
+  // 混線）も破損として扱い、厳密一致以外は fail loudly。
+  if (plan.totalBytes !== length) {
+    throw new Error(`セクション実長 ${length} がレイアウト要求 ${plan.totalBytes} と一致しない`);
   }
 
   const arrays: DecodedSection["arrays"] = {};

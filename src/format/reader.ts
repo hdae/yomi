@@ -6,7 +6,6 @@
 
 import {
   FORMAT_VERSION,
-  fourCC,
   HEADER_BYTES,
   MAGIC,
   SECTION_ALIGN,
@@ -32,6 +31,10 @@ export class JtdContainer {
       throw new Error(`JTD1: formatVersion ${version} は非対応（期待: ${FORMAT_VERSION}）`);
     }
     const sectionCount = dv.getUint32(8, true);
+    // 破損ヘッダの過大な sectionCount で生 RangeError に落ちる前に、表全体が収まるか検証する。
+    if (HEADER_BYTES + sectionCount * SECTION_ENTRY_BYTES > buffer.byteLength) {
+      throw new Error(`JTD1: sectionCount ${sectionCount} がファイルサイズに対して過大`);
+    }
 
     this.sections = new Map();
     for (let i = 0; i < sectionCount; i++) {
@@ -66,12 +69,4 @@ export class JtdContainer {
   has(name: string): boolean {
     return this.sections.has(name);
   }
-
-  /** セクション内オフセットの u32 を読む（サブヘッダ用）。 */
-  u32(s: SectionView, byteOffset: number): number {
-    return new DataView(this.buffer, s.offset, s.length).getUint32(byteOffset, true);
-  }
 }
-
-// 4cc の妥当性は書き手と共有の fourCC で担保する（re-export して使わせる）。
-export { fourCC };
