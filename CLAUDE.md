@@ -28,7 +28,8 @@
   - 依存は一方向: `format,text → dict → tokenizer → njd → g2p → analyze`（back-edge なし）
 - `dict-builder/` — naist-jdic CSV → JTD1 バイナリの書き手（Deno、開発/CI 時のみ・JSR 非公開）。
   `@hdae/yomi/format` を import する。
-- `fixtures/` — `golden-3k.jsonl`（回帰の真実源、committed）と生成辞書（gitignore）。
+- `fixtures/` — `golden-3k.jsonl`（回帰の真実源、committed。`src/golden.test.ts` が全レコードの
+  完全一致を固定）と生成辞書（gitignore）。
 - `docs/` — 上記索引。
 
 ## ツールチェーン・検証

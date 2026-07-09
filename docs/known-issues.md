@@ -3,12 +3,6 @@
 open な問題・作業待ちの項目。意図的な制約は [limitations.md](limitations.md) へ。
 出典の詳細は `.claude/reviews/2026-07-10_f641bcd/`（初回全域レビュー）の findings を参照。
 
-## 未配線
-
-- **golden-3k 回帰が未配線**（E-F-1）: `fixtures/golden-3k.jsonl` を消費する回帰テストが
-  リポジトリに存在しない（init 以来）。消費側ロジックは browser-tts
-  `tools/eval/src/golden_match.ts` に実在し、移植・CI 配線を進行中。
-
 ## ブラウザ辞書ローダ（専用パッケージ化予定のため据え置き）
 
 辞書の取得・キャッシュは Deno でも Cache API が使えることが分かったため、後日専用パッケージへ
@@ -27,7 +21,8 @@ open な問題・作業待ちの項目。意図的な制約は [limitations.md](
   fall-through か（W-C-7①）。
 - accent_phrase.ts のコメントラベル「Rule 08」重複の本家対応（W-C-2 付記）。
 - 既知語エッジ add 順が lindera（daachorse 頭挿入反転）の同点タイブレークと一致するか（W-B-1）。
-  golden 回帰配線後は実害の有無が回帰で固定される。
+  golden-3k 回帰（`src/golden.test.ts`）では実害ゼロを確認・固定済み。同点衝突そのものの
+  本家一致は未照合。
 
 ## lindera との既知の微差（病的入力のみ・方針未確定）
 
