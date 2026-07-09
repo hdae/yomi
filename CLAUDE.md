@@ -11,6 +11,8 @@
 
 - [docs/decisions/](docs/decisions/) — ADR（`0001` = 中立コア方針 / `0002` = 公開APIの面 / `0003` = 辞書配布(HF/gzip) / `0004` = 辞書ソース固定(naist-jdic v0.1.3)）
 - [docs/jtd1-format.md](docs/jtd1-format.md) — 辞書バイナリ JTD1 のフォーマット仕様
+- [docs/limitations.md](docs/limitations.md) — 意図的な制約（by-design）/
+  [docs/known-issues.md](docs/known-issues.md) — 未解決の既知問題
 - 分かち書きの詳細互換仕様（lindera/jpreprocess のオラクル精査）や G2P の設計背景は、研究リポジトリ
   `../browser-tts`（`docs/tokenizer-compat.md` ほか）を参照。
 
@@ -61,9 +63,12 @@
   パッケージ版と独立）。不変 SHA はキャッシュ。`revision: "main"` 等の可変 ref は HF revision API で現在 SHA を
   解決→SHA固定でキャッシュ（変わらなければ小さな問い合わせのみで再DL回避。resolve は no-store で 304 不可のため）。
   Actions での辞書処理は廃止（`release-dict.yml` 削除）。辞書差し替え時のみ hf CLI で上げ直し `DICT_REVISION` 更新。
-- **リリース**: v0.1.0 は JSR 公開済み。破壊的変更（SBV2削除・`/format`分離・ドメイン別サブパス再編＝
-  [0002](docs/decisions/0002-public-api-surface.md)・HF配布/gzip=[0003](docs/decisions/0003-dict-distribution.md)）は
-  **v0.2.0** に束ねる。HF 配布は完了したので、**v0.2.0 を release 可**（`deno task bump` → tag → GitHub Release）。
+- **リリース**: **v0.2.0 まで JSR 公開済み**（v0.2.0 = 2026-07-09。SBV2削除・`/format`分離・ドメイン別
+  サブパス再編＝[0002](docs/decisions/0002-public-api-surface.md)・HF配布/gzip=
+  [0003](docs/decisions/0003-dict-distribution.md) を同梱）。次版は未計画。
+- **辞書ローダの専用パッケージ化（計画）**: Cache API は Deno でも使えるためサポート対象を広げ、
+  辞書の取得・キャッシュを専用パッケージへ切り出す予定。それまで `src/browser` のローダ挙動改修は
+  据え置き（[docs/known-issues.md](docs/known-issues.md) 参照）。
 - **その後（任意）**: 辞書のオンディスク再エンコードでさらに軽量化（CONN 行 dedup・LEXI delta+varint・READ かなパック）。
 - **後回し**: 辞書ソースの pyopenjtalk-plus 化（naist-jdic 系統・BSD-3・品質改善＋大規模化）。採用時は
   golden を pyopenjtalk-plus オラクルで再生成する。

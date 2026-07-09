@@ -60,9 +60,10 @@ const calcTopNodeAcc = (
   const rule = current.chainRule !== null ? getRule(current.chainRule, prev.pos) : undefined;
   if (rule === undefined) return topAcc;
 
-  // NOTE: Rust は (mora_size as isize + add_type) as usize で負値が wrap するが、
-  // 実データで負になる組は観測されていない。ここでは 0 に丸める（wrap の再現は
-  // 無意味な巨大値になるだけなので採らない。差が出ればゴールデンが検出する）。
+  // NOTE: Rust は (mora_size as isize + add_type) as usize で負値が wrap する。負になる組は
+  // 実データで発生する（browser-tts の golden 実測で 100k 文中 2 件）。wrap の再現は無意味な
+  // 巨大値になるだけなので採らず 0 に丸める＝意図的な既知逸脱で、golden 照合側はこの 2 件を
+  // 既知逸脱（allowlist）として扱う。docs/limitations.md 参照。
   const addRule = () => Math.max(0, moraAcc + rule.addType);
 
   switch (rule.accentType) {
