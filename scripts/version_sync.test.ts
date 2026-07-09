@@ -2,7 +2,8 @@
 // deno.jsonc の version と一致するか。src/mod.ts と src/browser/mod.ts は src/constants.ts を re-export し、
 // constants.ts は deno.jsonc の焼き込みコピー。deno task bump が deno.jsonc と constants.ts を同時更新するが、
 // 手動編集や re-export の破壊（mod.ts に literal を書き戻す等）による drift をここで fail-loud にする
-// （loadDictionary の既定辞書 URL や公開 VERSION が実バージョンとズレるのを防ぐ）。
+// （公開 VERSION が JSR publish 版とズレるのを防ぐ。辞書 URL は DICT_REVISION 固定＝ADR-0003 で
+// VERSION とは独立なので、このガードの目的は publish 版の一致のみ）。
 import { VERSION } from "../src/mod.ts";
 import { readVersion } from "./config_version.ts";
 

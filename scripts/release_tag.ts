@@ -1,6 +1,6 @@
 // リリースタグ（v プレフィックス付き）の検証ロジック（純関数・依存ゼロ）。
 // タグ規約: git タグ / GitHub Release は `v<version>`（例 v0.1.0）。deno publish は
-//           deno.jsonc の version（bare）だけを見るためタグ prefix は JSR 公開と独立（ADR-0010: tag v*）。
+//           deno.jsonc の version（bare）だけを見るためタグ prefix は JSR 公開と独立。
 
 export type TagCheck =
   | { ok: true; version: string }

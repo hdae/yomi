@@ -2,9 +2,9 @@
 // 成功時は bare version を stdout に1行だけ出力する（診断は stderr）。
 //
 // 呼び出し例: deno run --no-lock --allow-read scripts/verify_tag.ts "$TAG"
-//   release-dict.yml は stdout（bare version）を受けてアセット名 naist-jdic-<version>.jtd に無変換で使う。
+//   stdout の bare version は現在コンシューマ無し（release.yml は exit code のみ利用。診断/将来用）。
 //   --no-lock は必須: config_version の jsr import が deno.lock を working tree に書き、
-//   直後の deno publish（release-jsr）を dirty で落とすのを防ぐ（gitignore 済みだが二重防御）。
+//   直後の deno publish（release.yml）を dirty で落とすのを防ぐ（gitignore 済みだが二重防御）。
 import { checkReleaseTag } from "./release_tag.ts";
 import { readVersion } from "./config_version.ts";
 import { VERSION } from "../src/mod.ts"; // 公開 `.` エントリの VERSION（constants.ts の re-export）。
@@ -16,7 +16,8 @@ if (import.meta.main) {
     Deno.exit(2);
   }
   const version = await readVersion();
-  // 公開 VERSION（loadDictionary の既定辞書 URL や `.` export が使う）が deno.jsonc と drift していないか。
+  // 公開 `.` エントリが re-export する VERSION が deno.jsonc（JSR publish 版）と drift していないか。
+  // 辞書 URL は DICT_REVISION 固定で VERSION とは独立（ADR-0003）＝このガードは publish 版の一致のみが目的。
   // release 時点でも fail-loud 検証する（version_sync.test.ts は dev/CI 側の同一ガード）。
   if (VERSION !== version) {
     console.error(

@@ -1,7 +1,7 @@
 // `deno task bump <patch|minor|major>`: deno.jsonc の version を組込み `deno bump-version` で
 // surgical に更新（コメント・整形を保全）し、焼き込み src/constants.ts も同じ版へ surgical 更新して、
 // その2ファイルの変更を1コミットにする。deno.jsonc(真実源)と VERSION を常に一致させる（drift 防止）。
-// tag / push はしない（オーナーが実施。ADR-0010: タグは v<version>）。
+// tag / push はしない（オーナーが実施。タグ規約 `v<version>` の検証は scripts/release_tag.ts）。
 import { readVersion } from "./config_version.ts";
 
 const INCREMENTS = [

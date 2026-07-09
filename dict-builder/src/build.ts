@@ -1,5 +1,5 @@
 // naist-jdic → JTD1 コンテナのビルド本体。
-// 使い方: deno task build-dict（data/naist-jdic → data/dict/naist-jdic.jtd）
+// 使い方: deno task build-dict（data/naist-jdic → fixtures/naist-jdic.jtd）
 
 import {
   CHAR_LAYOUT,
