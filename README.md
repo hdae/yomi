@@ -9,11 +9,11 @@ browser.
 ## 特徴
 
 - **アクセント付き G2P**: 読み・アクセント核位置・アクセント句境界・ポーズを出力。ブラウザ向け
-  TTS に欠けていた「日本語のアクセント付き G2P」を埋めます
-- **実行時依存ゼロ**: ブラウザ / Deno / Node / Workers で同一動作。外部プロセス・WASM・GPL 依存なし
+  TTS に不足していた「日本語のアクセント付き G2P」を提供します
+- **実行時依存ゼロ**: ブラウザ / Deno / Node / Workers で同一に動作。外部プロセス・WASM・GPL 依存なし
 - **OpenJTalk 系互換**: naist-jdic 辞書・lindera 互換の分かち書き・jpreprocess 互換の NJD アクセント後段
-- **モデル非依存**: 読み・モーラ・音素・モーラ毎のトーンを中立に出力。モデル固有の音素/トーン梱包は
-  呼び出し側で組む
+- **モデル非依存**: 読み・モーラ・音素・モーラ毎のトーンを中立な形で出力。モデル固有の音素・トーン形式への
+  変換（PAD トークン・トーン規約など）は呼び出し側で行います
 - **辞書キャッシュ**: `@hdae/yomi/browser` が Cache API に辞書をキャッシュし、magic + CRC で整合性検証
   （破損は fail loud、破損キャッシュは真実源から取り直す self-heal）
 
@@ -29,7 +29,7 @@ deno add jsr:@hdae/yomi
 import { analyze } from "@hdae/yomi";
 import { getDictionary } from "@hdae/yomi/browser";
 
-// このパッケージ版に対応する辞書を取得（Cache API にキャッシュ・整合性検証つき）。
+// 既定の辞書を取得（Cache API にキャッシュ・整合性検証つき）。
 const dict = await getDictionary();
 
 // テキスト → 読み + アクセント + 句境界。
@@ -74,22 +74,29 @@ dataset。GitHub の CORS 制約を避けるため）で、**gzip 版**（~6.4MB
 JTD1 の magic とセクション CRC で整合性検証してから `JtdDictionary` を返します（破損は throw＝fail loud）。
 破損・解凍失敗キャッシュは真実源（network）から取り直します（self-heal）。
 
-辞書はパッケージ版と独立に更新されるため、既定の取得は**辞書リポジトリのコミット**（`revision`）で固定します
-（コードに焼き込み済み＝immutable・再現性）。固定＝不変なので、次回以降はネットワークなしでキャッシュから返します。
+辞書はパッケージ版とは独立に更新されるため、既定の取得は**辞書リポジトリの特定コミット**に固定しています
+（そのコミット SHA をコードに埋め込んでいます）。コミットで固定していれば内容が変わらないので、安全にキャッシュ
+できます。用途に応じて `revision`（取得するコミット）や `url`（取得元）を指定できます。
 
 ```typescript
 import { fetchDictionaryBytes, getDictionary } from "@hdae/yomi/browser";
 
-// 既定: 焼き込み revision の辞書を JtdDictionary で取得（推奨・1ステップ）
+// 既定: 埋め込んだコミットの辞書を取得（推奨。JtdDictionary が返り、キャッシュされる）
 const dict = await getDictionary();
 
-// 明示的に revision や取得元を指定する場合（mirror / 自ホスト等）
-const other = await getDictionary({
-  revision: "main", // 既定 = パッケージに焼き込んだ辞書コミット
-  url: "https://example.com/naist-jdic-{revision}.jtd.gz", // {revision} は取得時に置換
+// 特定のコミットに固定して取得（40 桁の SHA はキャッシュ対象）
+const pinned = await getDictionary({ revision: "<40 桁のコミット SHA>" });
+
+// 常に最新を取得（"main" などの可変 ref はキャッシュせず、毎回取得し直す）
+const latest = await getDictionary({ revision: "main" });
+
+// 取得元だけ差し替える（ミラー・自ホスト等。{revision} は取得時に置換される）
+const mirrored = await getDictionary({
+  url: "https://example.com/naist-jdic-{revision}.jtd.gz",
 });
 
-// バイト列が要る場合（Worker 転送・独自キャッシュ等）は fetchDictionaryBytes（検証済みの生 JTD1）
+// 生のバイト列が必要な場合（Worker への転送・独自キャッシュ等）は fetchDictionaryBytes
+// （解凍・検証済みの JTD1。JtdDictionary.load にそのまま渡せる）
 const bytes = await fetchDictionaryBytes();
 ```
 
