@@ -45,6 +45,20 @@ export type LexicalEntry = {
   units: AccentUnit[];
 };
 
+/**
+ * 整数列のパース。`Number()` は非数値文字列を NaN にするが、NaN はどの範囲比較でも
+ * false になり後段の検証（build.ts の leftId/rightId/cost 範囲チェック）を素通りして
+ * TypedArray 書き込みで黙って 0 に化ける。fail-loud 方針に従いパース境界で弾く。
+ */
+const parseIntField = (s: string, label: string, lineNo: number): number => {
+  const v = Number(s);
+  // Number("") / Number(" ") は 0 になる（黙った 0 化のもう一つの形）ため空も弾く。
+  if (s.trim() === "" || !Number.isInteger(v)) {
+    throw new Error(`${lineNo}行目: ${label} が整数でない: ${JSON.stringify(s)}`);
+  }
+  return v;
+};
+
 /** "型/モーラ数" または "型" をパースして型だけ返す。"*"/"" は null。 */
 const parseAccType = (s: string): number | null => {
   if (s === "*" || s === "") return null;
@@ -88,9 +102,9 @@ export const parseCsvLine = (line: string, lineNo: number): LexicalEntry => {
 
   return {
     surface: f[COL.SURFACE],
-    leftId: Number(f[COL.LEFT_ID]),
-    rightId: Number(f[COL.RIGHT_ID]),
-    cost: Number(f[COL.COST]),
+    leftId: parseIntField(f[COL.LEFT_ID], "leftId", lineNo),
+    rightId: parseIntField(f[COL.RIGHT_ID], "rightId", lineNo),
+    cost: parseIntField(f[COL.COST], "cost", lineNo),
     features: [f[COL.POS], f[COL.POS1], f[COL.POS2], f[COL.POS3], f[COL.CTYPE], f[COL.CFORM]],
     chainRule: f[COL.CHAIN],
     units,

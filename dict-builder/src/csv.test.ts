@@ -42,6 +42,29 @@ Deno.test("アクセント '*' は null、列数不一致は throw", () => {
   assert(threw, "列数不一致で throw しない");
 });
 
+Deno.test("数値列: 整数にならない値（NaN/小数）はパース境界で throw（黙って0に化けない）", () => {
+  // NaN は範囲比較（<=0, >=1377 等）をすべて false で素通りし TypedArray で 0 に化けるため、
+  // ここで落ちることが後段の範囲検証の前提になる。
+  const row = (leftId: string, cost = "7133") =>
+    `語,${leftId},1345,${cost},名詞,一般,*,*,*,*,語,ゴ,ゴ,1/1,C2`;
+  for (const bad of ["12x", "abc", ""]) {
+    let threw = false;
+    try {
+      parseCsvLine(row(bad), 1);
+    } catch {
+      threw = true;
+    }
+    assert(threw, `leftId=${JSON.stringify(bad)} で throw しない`);
+  }
+  let threw = false;
+  try {
+    parseCsvLine(row("1345", "1.5"), 1);
+  } catch {
+    threw = true;
+  }
+  assert(threw, "cost=1.5（非整数）で throw しない");
+});
+
 Deno.test("char.def: 範囲行の出現順どおりの順序付きカテゴリ列（lindera lookup_categories 互換）", () => {
   const def = parseCharDef(`
 DEFAULT 0 1 0  # コメント
