@@ -13,7 +13,7 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: denoland/setup-deno@v2
         with:
           deno-version: v2.x
@@ -27,7 +27,7 @@ jobs:
       # 再ダウンロードを避ける。key は fetch_dict.ts のハッシュ＝SHA-256 pin が変われば自動失効。
       # ヒット時も後段の fetch_dict が checksum を再検証するので破損は self-healing（再取得）。
       - name: Cache naist-jdic source
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: data/naist-jdic
           key: naist-jdic-${{ hashFiles('dict-builder/src/fetch_dict.ts') }}

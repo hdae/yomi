@@ -17,7 +17,7 @@ jobs:
   dict:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: denoland/setup-deno@v2
         with:
           deno-version: v2.x
@@ -35,7 +35,7 @@ jobs:
 
       # 辞書ソースをキャッシュ（ci.yml と同じ key）。ヒット時 fetch は checksum 再検証のみ。
       - name: Cache naist-jdic source
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: data/naist-jdic
           key: naist-jdic-${{ hashFiles('dict-builder/src/fetch_dict.ts') }}
