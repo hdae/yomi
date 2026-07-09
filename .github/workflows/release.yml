@@ -1,4 +1,4 @@
-name: Release (JSR)
+name: Release
 
 # GitHub Release を publish すると @hdae/yomi を JSR に publish する。
 # この job は checkout(read)+OIDC(id-token) のみ・生成物を作らないので tree は clean（--allow-dirty 不要）。

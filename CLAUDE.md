@@ -57,8 +57,9 @@
 - **辞書配布(HF)**: 完了（[docs/decisions/0003](docs/decisions/0003-dict-distribution.md)）。辞書は HF dataset
   `hdae/yomi-dict` にアップロード済み（`.jtd` と gzip 版）。`getDictionary`（`JtdDictionary` を返す）＋下位
   `fetchDictionaryBytes`（検証済み生 bytes）、**gzip 優先取得＋先頭バイト自動解凍**（`DecompressionStream`）、
-  取得は**辞書リポのコミット SHA で固定**（`DEFAULT_REVISION`、パッケージ版と独立）。Actions での辞書処理は
-  廃止（`release-dict.yml` 削除）。辞書差し替え時のみ hf CLI で上げ直し `DEFAULT_REVISION` を更新する。
+  取得は**辞書リポのコミット SHA で固定**（`DICT_REVISION`／`DICT_URL` は [src/constants.ts](src/constants.ts)。
+  パッケージ版と独立）。不変 SHA はキャッシュ、`revision: "main"` 等の可変 ref は毎回最新取得（キャッシュしない）。
+  Actions での辞書処理は廃止（`release-dict.yml` 削除）。辞書差し替え時のみ hf CLI で上げ直し `DICT_REVISION` 更新。
 - **リリース**: v0.1.0 は JSR 公開済み。破壊的変更（SBV2削除・`/format`分離・ドメイン別サブパス再編＝
   [0002](docs/decisions/0002-public-api-surface.md)・HF配布/gzip=[0003](docs/decisions/0003-dict-distribution.md)）は
   **v0.2.0** に束ねる。HF 配布は完了したので、**v0.2.0 を release 可**（`deno task bump` → tag → GitHub Release）。
