@@ -3,12 +3,8 @@
 // ノードの分割・併合・品詞書き換えを行うため可変構造にする。
 
 import type { MoraSpec } from "../mora_table.ts";
-import type { AccentType, ChainRule, ChainRules } from "./chain_rules.ts";
+import type { ChainRules } from "./chain_rules.ts";
 import type { PosFeatures } from "./pos.ts";
-
-// NjdNode の公開フィールドが構造的に参照するため、これらの型も公開型として再エクスポートする
-// （JSR の public API 完全性チェック: 公開型が非公開型を参照することを禁止する private-type-ref 対策）。
-export type { AccentType, ChainRule, ChainRules, MoraSpec, PosFeatures };
 
 /** モーラ1個分の NJD 表現（音韻情報 + 無声化フラグ）。 */
 export type NjdMora = {
