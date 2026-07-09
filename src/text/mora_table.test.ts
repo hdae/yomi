@@ -2,7 +2,12 @@
 // jpreprocess の parse_mora_str（最長一致・無声化マーク・非マッチ文字の擬似モーラ化）
 // と同じ挙動になっているかを確認する。
 
-import { isMoraString, splitMoras, splitMorasWithRanges } from "./mora_table.ts";
+import {
+  ALL_MORA_TABLE_ENTRIES,
+  isMoraString,
+  splitMoras,
+  splitMorasWithRanges,
+} from "./mora_table.ts";
 
 const assert = (cond: boolean, msg: string) => {
   if (!cond) throw new Error(msg);
@@ -206,4 +211,40 @@ Deno.test("splitMoras と splitMorasWithRanges は一貫した結果になる（
   flat.moras.forEach((m, i) => {
     assert(m.kana === fromSegs[i].kana && m.pseudo === fromSegs[i].pseudo, `index ${i} 不一致`);
   });
+});
+
+// --- ALL_MORA_TABLE_ENTRIES の構造不変条件 ---
+// scanMoraSegments の「2文字キーを先に試し、なければ1文字キー」という決定的走査が
+// Aho-Corasick LeftmostLongest と等価になる前提（キーが全ユニーク・長さ1か2のみ・
+// prefix 衝突なし）を、テーブル本体に対して構造的に固定する。
+
+Deno.test("ALL_MORA_TABLE_ENTRIES: キーは全てユニーク（prefix 衝突なしの前提）", () => {
+  const keys = ALL_MORA_TABLE_ENTRIES.map((e) => e.key);
+  const unique = new Set(keys).size;
+  assert(unique === keys.length, `キーに重複あり: ユニーク ${unique} / 総数 ${keys.length}`);
+});
+
+Deno.test("ALL_MORA_TABLE_ENTRIES: キー長は 1 か 2 のみ（3文字以上のキーは無い）", () => {
+  for (const e of ALL_MORA_TABLE_ENTRIES) {
+    assert(
+      e.key.length === 1 || e.key.length === 2,
+      `キー長が想定外: ${JSON.stringify(e.key)} (length ${e.key.length})`,
+    );
+  }
+});
+
+Deno.test("ALL_MORA_TABLE_ENTRIES: 全 expansion の vowel は既知集合に含まれる", () => {
+  const known = new Set(["a", "i", "u", "e", "o", "N", "cl", "long"]);
+  for (const e of ALL_MORA_TABLE_ENTRIES) {
+    for (const m of e.expansion) {
+      assert(known.has(m.vowel), `未知の vowel「${m.vowel}」（キー ${JSON.stringify(e.key)}）`);
+    }
+  }
+});
+
+Deno.test("ALL_MORA_TABLE_ENTRIES: キーに無声化マーク U+2019 を含まない", () => {
+  // U+2019(’) はマッチ後の走査で消費されるフラグであり、キー自身に混入してはならない。
+  for (const e of ALL_MORA_TABLE_ENTRIES) {
+    assert(!e.key.includes("’"), `キーに U+2019 が混入: ${JSON.stringify(e.key)}`);
+  }
 });

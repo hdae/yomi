@@ -85,8 +85,14 @@ export const tokenize = (
 
     let cursor = node.start;
     for (let u = uFrom; u < uTo; u++) {
-      // unitSurfLen=0 は「残り全部」（最終ユニット）。
+      // unitSurfLen=0 は「残り全部」（最終ユニット専用のセンチネル。書き手も csv.ts で
+      // 非最終の実長 0 を拒否するが、壊れた辞書を黙って誤分割しないよう読み手でも検証する）。
       const len = dict.unitSurfLen[u];
+      if (len === 0 && u !== uTo - 1) {
+        throw new Error(
+          `辞書破損: 非最終ユニットの surfLen=0（表層 ${normalized.slice(node.start, node.end)}）`,
+        );
+      }
       const end = len === 0 ? node.end : cursor + len;
       const accType = dict.unitAccType[u];
       tokens.push({
@@ -102,6 +108,15 @@ export const tokenize = (
         isUnknown: false,
       });
       cursor = end;
+    }
+    // ユニット表層長の総和 = ノード表層長 という辞書側不変条件を信頼せず検証する
+    // （破れると末尾文字の黙った脱落や空表層トークンになる。fail loudly）。
+    if (cursor !== node.end) {
+      throw new Error(
+        `辞書破損: ユニット分割がノード表層を被覆しない（表層 ${
+          normalized.slice(node.start, node.end)
+        }, 到達 ${cursor - node.start}/${node.end - node.start}）`,
+      );
     }
   }
 
