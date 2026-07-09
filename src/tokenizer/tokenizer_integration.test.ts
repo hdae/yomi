@@ -69,18 +69,5 @@ Deno.test({
   },
 });
 
-Deno.test({
-  name: "性能の下限: 100文字級の文を1000回で1文あたり2ms未満",
-  ignore: !dictExists,
-  fn() {
-    const dict = loadDict();
-    const text =
-      "国境の長いトンネルを抜けると雪国であった。夜の底が白くなった。信号所に汽車が止まった。" +
-      "向側の座席から娘が立って来て、島村の前のガラス窓を落した。雪の冷気が流れこんだ。";
-    tokenize(dict, text); // ウォームアップ
-    const t0 = performance.now();
-    for (let i = 0; i < 1000; i++) tokenize(dict, text);
-    const perSentence = (performance.now() - t0) / 1000;
-    if (perSentence > 2) throw new Error(`1文 ${perSentence.toFixed(2)}ms は目標超過`);
-  },
-});
+// NOTE: 性能の計測は scripts/tokenize_bench.ts（deno task bench）に分離した。
+// 共有 CI ランナーの負荷変動で固定閾値アサートが flaky 化するため、機能テストには含めない。

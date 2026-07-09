@@ -23,6 +23,8 @@
     "fmt": "deno fmt",
     // naist-jdic → JTD1 を生成し fixtures/naist-jdic.jtd に出力（統合テストの既定辞書）。
     "build-dict": "deno run -A dict-builder/src/build.ts",
+    // 性能ベンチ（dev 用・CI の pass/fail に使わない。scripts/tokenize_bench.ts 参照）。
+    "bench": "deno bench --allow-read --allow-env scripts/",
     // version を bump（例: deno task bump patch）。組込み deno bump-version で deno.jsonc の version を
     // 更新し、焼き込み src/constants.ts も同じ版へ surgical 更新して、2ファイルを1コミットにする（tag/push はしない）。
     "bump": "deno run --allow-read --allow-run=deno,git --allow-write=src/constants.ts --no-lock scripts/bump.ts"
