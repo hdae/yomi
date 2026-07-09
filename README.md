@@ -87,7 +87,8 @@ const dict = await getDictionary();
 // 特定のコミットに固定して取得（40 桁の SHA はキャッシュ対象）
 const pinned = await getDictionary({ revision: "<40 桁のコミット SHA>" });
 
-// 常に最新を取得（"main" などの可変 ref はキャッシュせず、毎回取得し直す）
+// 常に最新を取得（"main" などの可変 ref は現在のコミット SHA を確認し、
+// 変わっていなければキャッシュから返す＝辞書本体の無駄な再取得を避ける）
 const latest = await getDictionary({ revision: "main" });
 
 // 取得元だけ差し替える（ミラー・自ホスト等。{revision} は取得時に置換される）

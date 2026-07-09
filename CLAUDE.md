@@ -58,7 +58,8 @@
   `hdae/yomi-dict` にアップロード済み（`.jtd` と gzip 版）。`getDictionary`（`JtdDictionary` を返す）＋下位
   `fetchDictionaryBytes`（検証済み生 bytes）、**gzip 優先取得＋先頭バイト自動解凍**（`DecompressionStream`）、
   取得は**辞書リポのコミット SHA で固定**（`DICT_REVISION`／`DICT_URL` は [src/constants.ts](src/constants.ts)。
-  パッケージ版と独立）。不変 SHA はキャッシュ、`revision: "main"` 等の可変 ref は毎回最新取得（キャッシュしない）。
+  パッケージ版と独立）。不変 SHA はキャッシュ。`revision: "main"` 等の可変 ref は HF revision API で現在 SHA を
+  解決→SHA固定でキャッシュ（変わらなければ小さな問い合わせのみで再DL回避。resolve は no-store で 304 不可のため）。
   Actions での辞書処理は廃止（`release-dict.yml` 削除）。辞書差し替え時のみ hf CLI で上げ直し `DICT_REVISION` 更新。
 - **リリース**: v0.1.0 は JSR 公開済み。破壊的変更（SBV2削除・`/format`分離・ドメイン別サブパス再編＝
   [0002](docs/decisions/0002-public-api-surface.md)・HF配布/gzip=[0003](docs/decisions/0003-dict-distribution.md)）は

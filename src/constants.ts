@@ -23,3 +23,11 @@ export const DICT_REVISION = "ab847217c833593c3aec9875b9bfa6ff9789dc29";
  */
 export const DICT_URL =
   "https://huggingface.co/datasets/hdae/yomi-dict/resolve/{revision}/naist-jdic.jtd.gz";
+
+/**
+ * 可変 ref（`"main"` 等）を現在のコミット SHA に解決する HF dataset API（`{ref}` を解決）。
+ * getDictionary は既定ホストで可変 ref を渡されたとき、これで SHA を引いてから SHA 固定で取得・キャッシュする
+ * （SHA が変わらなければ小さな JSON 問い合わせだけで DL を省ける）。`{"sha": …}` を返す前提。
+ */
+export const DICT_REVISION_API =
+  "https://huggingface.co/api/datasets/hdae/yomi-dict/revision/{ref}";

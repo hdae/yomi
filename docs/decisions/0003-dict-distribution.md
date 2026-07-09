@@ -20,8 +20,11 @@
    ワイルドカード CORS（302→CDN の両ホップとも CORS ヘッダあり・実測確認済み）。
 2. **取得は辞書リポのコミット SHA で固定**する。`src/constants.ts` に `DICT_REVISION`（HF コミット SHA）と
    `DICT_URL`（取得元テンプレ）を焼き込み、`…/resolve/{revision}/…` で immutable・reproducible に取得する
-   （パッケージ版と分離）。辞書差し替え時のみ新 SHA に更新する。40桁 hex の SHA は不変＝キャッシュ対象、
-   `revision: "main"` 等の可変 ref は毎回 network から最新を取得する（キャッシュしない）＝「常に最新」ニーズに対応。
+   （パッケージ版と分離）。辞書差し替え時のみ新 SHA に更新する。40桁 hex の SHA は不変＝キャッシュ対象。
+   `revision: "main"` 等の可変 ref は「常に最新」ニーズ用で、既定ホストでは HF の revision API
+   （`DICT_REVISION_API`）で現在の SHA に解決してから SHA 固定で取得・キャッシュする＝SHA が変わらなければ
+   小さな JSON 問い合わせだけで辞書本体（~6.4MB）の再 DL を省く（HF resolve は `no-store` で HTTP キャッシュの
+   304 が効かないため、SHA 解決で無駄 DL を避ける）。
 3. **gzip 優先取得＋自動解凍**。既定は `.jtd.gz`（~6.4MB）を取得し `DecompressionStream('gzip')` で解凍。
    loader は先頭バイト（`1f 8b`）で gzip を自動判定するので、生 `.jtd` を指す URL でも透過的に動く。HF には
    **`.jtd` と `.jtd.gz` を両方**置く（gz が既定・生は escape hatch/デバッグ用）。

@@ -8,7 +8,8 @@
  * 固定する＝immutable・reproducible。`getDictionary()` は取得結果を Cache API に保存し（次回以降 network なし）、
  * 解凍後のバイト列を JTD1 magic とセクション CRC で検証してから `JtdDictionary` を返す（破損は throw＝fail loud）。
  * 破損・解凍失敗キャッシュは真実源から取り直す（self-heal）。
- * 常に最新の辞書が要る場合は `revision: "main"` 等の可変 ref を渡す＝毎回 network から取得する（キャッシュしない）。
+ * 常に最新の辞書が要る場合は `revision: "main"` 等の可変 ref を渡す＝既定ホストでは現在の SHA を解決してから
+ * 取得するので、SHA が変わらなければキャッシュから返す（辞書本体の再 DL を省く）。
  *
  * MUST: ここは実行時依存ゼロ。Cache API / fetch / DecompressionStream / TextDecoder などブラウザ標準のみを使う。
  *
@@ -18,7 +19,7 @@
 import { JtdContainer } from "../format/reader.ts";
 import { crc32Hex } from "../format/crc32.ts";
 import { JtdDictionary } from "../dict/dictionary.ts";
-import { DICT_REVISION, DICT_URL, VERSION } from "../constants.ts";
+import { DICT_REVISION, DICT_REVISION_API, DICT_URL, VERSION } from "../constants.ts";
 
 export { VERSION };
 
@@ -30,7 +31,8 @@ export type GetDictionaryOptions = {
   url?: string;
   /**
    * 辞書リビジョン（HF コミット SHA / ブランチ / タグ）。既定 = 焼き込んだ `DICT_REVISION`（不変 SHA）。
-   * 40桁 hex の SHA はキャッシュする（不変）。`"main"` 等の可変 ref は毎回 network から最新を取得する。
+   * 40桁 hex の SHA はそのまま取得・キャッシュする（不変）。`"main"` 等の可変 ref は既定ホストでは
+   * 現在の SHA に解決してから取得するので、SHA が変わらなければキャッシュから返る（毎回の DL を避ける）。
    */
   revision?: string;
   /** Cache Storage の名前空間。既定 "yomi-dict"。 */
@@ -90,15 +92,37 @@ const materialize = async (raw: Uint8Array<ArrayBuffer>): Promise<ArrayBuffer> =
 };
 
 /**
+ * 可変 ref（"main" 等）を現在のコミット SHA に解決する（HF dataset API）。SHA 固定に直してから取得・
+ * キャッシュすることで、SHA が変わらなければ辞書本体（~6.4MB）の再 DL を省ける（小さな JSON 問い合わせのみ）。
+ */
+const resolveRevision = async (ref: string): Promise<string> => {
+  const res = await fetch(DICT_REVISION_API.replace(/\{ref\}/g, ref));
+  if (!res.ok) {
+    throw new Error(`辞書リビジョン解決失敗: HTTP ${res.status} ${res.statusText} (${ref})`);
+  }
+  const info = await res.json() as { sha?: unknown };
+  if (typeof info.sha !== "string") {
+    throw new Error(`辞書リビジョン解決失敗: 応答に sha が無い (${ref})`);
+  }
+  return info.sha;
+};
+
+/**
  * 検証済み JTD1 の ArrayBuffer を取得する（gzip 自動解凍・CRC 検証・self-heal）。
- * 不変 SHA の revision のみ Cache API を使う（可変 ref は毎回 network＝常に最新）。キャッシュには
- * 取得物（gzip）をそのまま保存する（小さい＝storage を節約）。getDictionary / fetchDictionaryBytes の共有経路。
+ * 既定ホストで可変 ref（"main" 等）を渡されたら、まず HF API で現在の SHA に解決してから SHA 固定で
+ * 取得する（無駄 DL 回避）。不変 SHA の revision のみ Cache API を使う。キャッシュには取得物（gzip）を
+ * そのまま保存する（小さい＝storage を節約）。getDictionary / fetchDictionaryBytes の共有経路。
  */
 const fetchVerifiedBuffer = async (opts: GetDictionaryOptions): Promise<ArrayBuffer> => {
-  const revision = opts.revision ?? DICT_REVISION;
-  const requestUrl = (opts.url ?? DICT_URL).replace(/\{revision\}/g, revision);
+  const rawRevision = opts.revision ?? DICT_REVISION;
   const cacheName = opts.cacheName ?? DEFAULT_CACHE_NAME;
-  // 不変 SHA のみキャッシュ。可変 ref（"main" 等）は毎回最新を取得＝「常に最新」ニーズに対応。
+  // 既定ホストで可変 ref を渡されたら現在の SHA に解決する（SHA 固定＝キャッシュ可＝無駄 DL 回避）。
+  // url を上書きした場合は解決経路が使えないので、可変 ref のまま毎回取得する。
+  const revision = (opts.url === undefined && !isImmutableRevision(rawRevision))
+    ? await resolveRevision(rawRevision)
+    : rawRevision;
+  const requestUrl = (opts.url ?? DICT_URL).replace(/\{revision\}/g, revision);
+  // 不変 SHA のみキャッシュ（可変 ref は上で解決済み。解決できない url 上書き時のみ非キャッシュ）。
   const useCache = typeof caches !== "undefined" && isImmutableRevision(revision);
 
   if (useCache) {
@@ -134,8 +158,8 @@ const fetchVerifiedBuffer = async (opts: GetDictionaryOptions): Promise<ArrayBuf
  * 引数なしで呼ぶと、constants に焼き込んだ既定 revision の辞書を Hugging Face から gzip で取得し、
  * 解凍・検証して返す。不変 SHA 固定なので Cache API 優先（ヒットすれば network なし）。キャッシュが
  * 破損・解凍不能なら evict して network から取り直す（self-heal）。`revision: "main"` 等の可変 ref を渡すと
- * キャッシュせず毎回最新を取得する。取得・キャッシュいずれの経路でも magic + CRC を検証し、破損は throw
- * する（fail loud）。検証済みなので `JtdDictionary.load` の再 CRC は省く。
+ * 現在の SHA を解決してから取得するので、変わっていなければキャッシュから返る。取得・キャッシュいずれの
+ * 経路でも magic + CRC を検証し、破損は throw する（fail loud）。検証済みなので `JtdDictionary.load` の再 CRC は省く。
  *
  * NOTE: Cache API は https / localhost の Secure Context でのみ利用可能。非対応環境では
  *       fetch のみで取得し、キャッシュはスキップする。DecompressionStream はブラウザ / Deno / Node 18+ /

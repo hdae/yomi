@@ -1,5 +1,5 @@
 // browser/mod.ts の単体テスト。fetch と Cache API をモックして、既定 revision 解決・上書き・
-// 不変 SHA のキャッシュ / 可変 ref（main 等）の毎回最新取得・self-heal・gzip 自動解凍・整合性検証
+// 不変 SHA のキャッシュ / 可変 ref（main）の SHA 解決＋キャッシュ・self-heal・gzip 自動解凍・整合性検証
 // （fail loud）を検証する。依存ゼロを守るため、テスト用の最小 JTD1 バイト列は format 定数から手組みする。
 
 import { fetchDictionaryBytes, getDictionary, verifyJtd } from "./mod.ts";
@@ -85,6 +85,8 @@ const gzipBytes = async (data: Uint8Array<ArrayBuffer>): Promise<Uint8Array<Arra
 const installMocks = (opts: {
   responseBytes?: Uint8Array<ArrayBuffer>;
   responseOk?: boolean;
+  /** HF revision API（/api/datasets/…/revision/…）が返す SHA。可変 ref の解決テスト用。 */
+  revisionSha?: string;
 }) => {
   const origFetch = globalThis.fetch;
   const origCaches = (globalThis as { caches?: CacheStorage }).caches;
@@ -111,6 +113,15 @@ const installMocks = (opts: {
 
   globalThis.fetch = ((input: string) => {
     fetchedUrls.push(input);
+    // HF の revision 解決 API（/api/datasets/…/revision/{ref}）は JSON {sha} を返す。
+    if (input.includes("/api/datasets/") && input.includes("/revision/")) {
+      return Promise.resolve(
+        new Response(JSON.stringify({ sha: opts.revisionSha ?? "" }), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
+      );
+    }
     const body: Uint8Array<ArrayBuffer> = opts.responseBytes ?? new Uint8Array();
     return Promise.resolve(
       new Response(body, {
@@ -179,15 +190,21 @@ Deno.test("fetchDictionaryBytes: 既定は焼き込み revision の HF gzip URL 
   }
 });
 
-Deno.test("fetchDictionaryBytes: revision を上書きできる（URL に反映）", async () => {
+Deno.test("fetchDictionaryBytes: 不変 SHA の revision はそのまま URL に反映される（解決なし）", async () => {
   const valid = buildMinimalJtd();
+  const revision = sha("f");
   const mocks = installMocks({ responseBytes: valid });
   try {
-    await fetchDictionaryBytes({ revision: "9.9.9" });
+    await fetchDictionaryBytes({ revision });
     assert(
       mocks.fetchedUrls[0] ===
-        "https://huggingface.co/datasets/hdae/yomi-dict/resolve/9.9.9/naist-jdic.jtd.gz",
-      `revision 上書きが URL に反映されていない: ${mocks.fetchedUrls[0]}`,
+        `https://huggingface.co/datasets/hdae/yomi-dict/resolve/${revision}/naist-jdic.jtd.gz`,
+      `不変 SHA が URL に反映されていない: ${mocks.fetchedUrls[0]}`,
+    );
+    // 不変 SHA は revision 解決 API を叩かない。
+    assert(
+      mocks.fetchedUrls.every((u) => !u.includes("/revision/")),
+      "不変 SHA なのに API を叩いた",
     );
   } finally {
     mocks.restore();
@@ -245,22 +262,23 @@ Deno.test("fetchDictionaryBytes: 不変 SHA はキャッシュヒット時に fe
   }
 });
 
-Deno.test("fetchDictionaryBytes: 可変 ref（main 等）は毎回 network から最新を取得しキャッシュしない", async () => {
+Deno.test("fetchDictionaryBytes: 可変 ref（main）は SHA 解決して SHA でキャッシュする（効率的な最新取得）", async () => {
   const valid = buildMinimalJtd();
-  const mocks = installMocks({ responseBytes: valid });
+  const resolvedSha = sha("e");
+  const mocks = installMocks({ responseBytes: valid, revisionSha: resolvedSha });
+  const dictUrl =
+    `https://huggingface.co/datasets/hdae/yomi-dict/resolve/${resolvedSha}/naist-jdic.jtd.gz`;
   try {
-    await fetchDictionaryBytes({ revision: "main" });
-    await fetchDictionaryBytes({ revision: "main" });
-    assert(
-      mocks.fetchCalls() === 2,
-      "可変 ref なのに2回目が fetch されていない（キャッシュしてしまった）",
-    );
-    assert(mocks.store.size === 0, "可変 ref はキャッシュしないはず");
-    assert(
-      mocks.fetchedUrls[0] ===
-        "https://huggingface.co/datasets/hdae/yomi-dict/resolve/main/naist-jdic.jtd.gz",
-      "main の resolve URL が想定と不一致",
-    );
+    await fetchDictionaryBytes({ revision: "main" }); // 1回目: API 解決 + dict 取得 + キャッシュ
+    await fetchDictionaryBytes({ revision: "main" }); // 2回目: API 解決 + dict はキャッシュヒット
+    // API（revision 解決）は毎回叩く（最新確認）。dict 本体は SHA が同じなので1回だけ DL。
+    const apiCalls = mocks.fetchedUrls.filter((u) => u.includes("/revision/")).length;
+    const dictCalls = mocks.fetchedUrls.filter((u) => u === dictUrl).length;
+    assert(apiCalls === 2, `revision API は毎回叩くはず: ${apiCalls}`);
+    assert(dictCalls === 1, `dict 本体は SHA 固定でキャッシュされ1回のみ DL のはず: ${dictCalls}`);
+    // dict は解決した SHA の URL でのみキャッシュされる（API 応答はキャッシュしない）。
+    assert(mocks.store.has(dictUrl), "dict が解決 SHA でキャッシュされていない");
+    assert(mocks.store.size === 1, "API 応答をキャッシュしてはいけない");
   } finally {
     mocks.restore();
   }
@@ -333,7 +351,7 @@ Deno.test({
     const fixture = Deno.readFileSync(dictPath());
     const mocks = installMocks({ responseBytes: fixture });
     try {
-      const dict = await getDictionary({ revision: "test", cacheName: "yomi-dict-test" });
+      const dict = await getDictionary({ revision: sha("0"), cacheName: "yomi-dict-test" });
       assert(dict instanceof JtdDictionary, "JtdDictionary を返していない");
       assert(dict.meta.dictName.length > 0, "meta.dictName が空");
       assert(dict.trie.surfaceCount > 0, "trie が空");
