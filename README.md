@@ -26,12 +26,11 @@ deno add jsr:@hdae/yomi
 ## クイックスタート
 
 ```typescript
-import { analyze, JtdDictionary } from "@hdae/yomi";
-import { loadDictionary } from "@hdae/yomi/browser";
+import { analyze } from "@hdae/yomi";
+import { getDictionary } from "@hdae/yomi/browser";
 
 // このパッケージ版に対応する辞書を取得（Cache API にキャッシュ・整合性検証つき）。
-const bytes = await loadDictionary();
-const dict = JtdDictionary.load(bytes.buffer);
+const dict = await getDictionary();
 
 // テキスト → 読み + アクセント + 句境界。
 const result = analyze(dict, "こんにちは、今日はいい天気ですね。");
@@ -69,23 +68,29 @@ console.log(analyze(dict, "音声合成のテストを行います。"));
 
 ## 辞書の配布とキャッシュ
 
-辞書 `naist-jdic.jtd`（JTD1 バイナリ）はパッケージに同梱せず、versioned なリリースアセットとして実行時に
-取得します。`@hdae/yomi/browser` の `loadDictionary` は辞書を **Cache API** に保存し、取得したバイト列を
-JTD1 の magic とセクション CRC で整合性検証します（破損は throw＝fail loud）。破損キャッシュは真実源
+辞書 `naist-jdic.jtd`（JTD1 バイナリ）はパッケージに同梱せず、実行時に取得します。既定の取得元は
+**Hugging Face**（`hdae/yomi-dict` dataset。GitHub の CORS 制約を避けるため）。`@hdae/yomi/browser` の
+`getDictionary` は辞書を **Cache API** に保存し、取得したバイト列を JTD1 の magic とセクション CRC で
+整合性検証してから `JtdDictionary` を返します（破損は throw＝fail loud）。破損キャッシュは真実源
 （network）から取り直します（self-heal）。
 
 既定では、このパッケージ自身の版に対応する辞書を取得します（版をコードに焼き込み済み＝コードと辞書の版が
 常に一致し再現性が保たれる）。版固定＝不変なので、次回以降はネットワークなしでキャッシュから返します。
 
 ```typescript
-// 既定: 自身の版の辞書（推奨）
-const bytes = await loadDictionary();
+import { fetchDictionaryBytes, getDictionary } from "@hdae/yomi/browser";
+
+// 既定: 自身の版の辞書を JtdDictionary で取得（推奨・1ステップ）
+const dict = await getDictionary();
 
 // 明示的に版や取得元を指定する場合（mirror / 自ホスト等）
-const other = await loadDictionary({
+const other = await getDictionary({
   version: "0.1.0", // 既定 = パッケージ自身の版
   url: "https://example.com/naist-jdic-{version}.jtd", // {version} は取得時に置換
 });
+
+// バイト列が要る場合（Worker 転送・独自キャッシュ等）は fetchDictionaryBytes（検証済み）
+const bytes = await fetchDictionaryBytes();
 ```
 
 ## ライセンス

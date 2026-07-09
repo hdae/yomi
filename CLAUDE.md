@@ -57,9 +57,11 @@
 - **リリース**: v0.1.0 は JSR 公開済み。以降の破壊的変更（SBV2削除・`/format`分離・ドメイン別サブパス
   再編＝[0002](docs/decisions/0002-public-api-surface.md)）は **v0.2.0** に束ねる。**辞書データのアップロード
   （HF 配布）完了後に release** する方針＝それまで `deno task bump` しない。
-- **次**: 配布の HuggingFace 移行（GitHub の CORS 回避。`hdae/yomi-dict` に `.jtd` をアップロード、
-  `DEFAULT_URL` と [release-dict.yml](.github/workflows/release-dict.yml) を HF へ）と
-  `loadDictionary`→`getDictionary` 改名。
+- **辞書配布(HF)**: コード側は完了 — `loadDictionary`→`getDictionary`（`JtdDictionary` を返す）＋
+  下位 `fetchDictionaryBytes`（検証済み bytes）、`DEFAULT_URL` を HF dataset へ、
+  [release-dict.yml](.github/workflows/release-dict.yml) を HF アップロードへ。**残りはオーナー作業**＝
+  HF dataset `hdae/yomi-dict` 作成・`HF_TOKEN`(write) を GitHub secret 登録・初回 `.jtd` アップロード。
+  完了後に v0.2.0 を release。
 - **その後**: フォーマット軽量化（転送 gzip＋オンディスク再エンコード）。
 - **後回し**: 辞書ソースの pyopenjtalk-plus 化（naist-jdic 系統・BSD-3・品質改善＋大規模化）。採用時は
   golden を pyopenjtalk-plus オラクルで再生成する。

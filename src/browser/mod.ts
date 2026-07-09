@@ -1,8 +1,9 @@
 /**
- * `@hdae/yomi/browser` — ブラウザ用の辞書キャッシュローダ（純ブラウザ API・依存ゼロ）。
+ * `@hdae/yomi/browser` — ブラウザ用の辞書ローダ（純ブラウザ API・依存ゼロ）。
  *
- * 辞書 JTD1（~19MB）はパッケージに同梱せず、versioned なリリースアセットとして実行時に取得する。
- * `loadDictionary()` は既定で「このパッケージ自身の版」に対応する辞書を取得し（コードと辞書の版が
+ * 辞書 JTD1（~19MB）はパッケージに同梱せず、実行時に取得する。既定は Hugging Face
+ * （`hdae/yomi-dict` dataset。GitHub の CORS 制約を避ける＝単純 GET はワイルドカード CORS）。
+ * `getDictionary()` は既定で「このパッケージ自身の版」に対応する辞書を取得し（コードと辞書の版が
  * 常に一致・再現性）、版固定＝不変なので Cache API 優先で次回以降は network なしで返す。破損キャッシュは
  * 真実源（network）から取り直し（self-heal）、取得バイト列は JTD1 magic とセクション CRC で検証して
  * 破損は throw する（fail loud・黙って劣化しない）。
@@ -14,22 +15,24 @@
 
 import { JtdContainer } from "../format/reader.ts";
 import { crc32Hex } from "../format/crc32.ts";
+import { JtdDictionary } from "../dict/dictionary.ts";
 import { VERSION } from "../constants.ts";
 
 export { VERSION };
 
 /**
- * 既定の取得元。@hdae/yomi の GitHub Release（`{version}` は取得時に解決）。tag は v プレフィックス、
- * アセット名は bare version。mirror / fork / 自ホストは `url` で上書きできる。
+ * 既定の取得元。Hugging Face の `hdae/yomi-dict`（dataset）resolve エンドポイント。
+ * `{version}` は取得時に解決する。ファイル名に版を埋めるため resolve/main でも版ごとに不変
+ * （同名を上書きしない運用）。mirror / fork / 自ホストは `url` で上書きできる。
  */
 const DEFAULT_URL =
-  "https://github.com/hdae/yomi/releases/download/v{version}/naist-jdic-{version}.jtd";
+  "https://huggingface.co/datasets/hdae/yomi-dict/resolve/main/naist-jdic-{version}.jtd";
 
 const DEFAULT_CACHE_NAME = "yomi-dict";
 
-/** 辞書取得の指定。すべて任意で、既定は「このパッケージ自身の版をリリースアセットから取得」。 */
-export type LoadDictionaryOptions = {
-  /** 取得元 URL テンプレ（`{version}` を含む）または完成 URL。既定 = @hdae/yomi の GitHub Release。 */
+/** 辞書取得の指定。すべて任意で、既定は「このパッケージ自身の版を Hugging Face から取得」。 */
+export type GetDictionaryOptions = {
+  /** 取得元 URL テンプレ（`{version}` を含む）または完成 URL。既定 = @hdae/yomi の HF dataset。 */
   url?: string;
   /** 取得するバージョン。既定 = このパッケージ自身のバージョン（`VERSION`）。 */
   version?: string;
@@ -66,16 +69,10 @@ export const verifyJtd = (bytes: Uint8Array): void => {
 };
 
 /**
- * 辞書を取得して返す（整合性検証済みの JTD1 バイト列。`JtdDictionary.load` にそのまま渡せる）。
- * 引数なしで呼ぶと、このパッケージ自身の版に対応する辞書を GitHub Release から取得する。
- * バージョン固定＝不変なので Cache API 優先（ヒットすれば network なし）。キャッシュが破損していた場合は
- * それを evict して network から取り直す（self-heal）。取得・キャッシュいずれの経路でも magic + CRC を
- * 検証し、破損は throw する（fail loud）。
- *
- * NOTE: Cache API は https / localhost の Secure Context でのみ利用可能。非対応環境では
- *       fetch のみで取得し、キャッシュはスキップする。
+ * 検証済み JTD1 の ArrayBuffer を取得する（キャッシュ優先・self-heal・CRC 検証）。
+ * getDictionary / fetchDictionaryBytes の共有経路。
  */
-export const loadDictionary = async (opts: LoadDictionaryOptions = {}): Promise<Uint8Array> => {
+const fetchVerifiedBuffer = async (opts: GetDictionaryOptions): Promise<ArrayBuffer> => {
   const version = opts.version ?? VERSION;
   const requestUrl = (opts.url ?? DEFAULT_URL).replace(/\{version\}/g, version);
   const cacheName = opts.cacheName ?? DEFAULT_CACHE_NAME;
@@ -85,10 +82,10 @@ export const loadDictionary = async (opts: LoadDictionaryOptions = {}): Promise<
     const cache = await caches.open(cacheName);
     const cached = await cache.match(requestUrl);
     if (cached) {
-      const bytes = new Uint8Array(await cached.arrayBuffer());
+      const buffer = await cached.arrayBuffer();
       try {
-        verifyJtd(bytes);
-        return bytes;
+        verifyJtd(new Uint8Array(buffer));
+        return buffer;
       } catch {
         // 破損キャッシュ。真実源（network）から取り直すため evict してフォールスルー（self-heal）。
         await cache.delete(requestUrl);
@@ -100,12 +97,36 @@ export const loadDictionary = async (opts: LoadDictionaryOptions = {}): Promise<
   if (!response.ok) {
     throw new Error(`辞書取得失敗: HTTP ${response.status} ${response.statusText} (${requestUrl})`);
   }
-  const bytes = new Uint8Array(await response.arrayBuffer());
-  verifyJtd(bytes); // 保存前に検証（破損は throw＝壊れたものはキャッシュしない・黙って劣化させない）。
+  const buffer = await response.arrayBuffer();
+  verifyJtd(new Uint8Array(buffer)); // 保存前に検証（破損は throw＝壊れたものはキャッシュしない）。
 
   if (hasCacheApi) {
     const cache = await caches.open(cacheName);
-    await cache.put(requestUrl, new Response(bytes)); // 検証済みバイト列を保存。
+    await cache.put(requestUrl, new Response(buffer)); // 検証済みバイト列を保存。
   }
-  return bytes;
+  return buffer;
 };
+
+/**
+ * 辞書を取得して `JtdDictionary` を返す（1呼び出しで完結）。
+ * 引数なしで呼ぶと、このパッケージ自身の版に対応する辞書を Hugging Face から取得する。
+ * バージョン固定＝不変なので Cache API 優先（ヒットすれば network なし）。キャッシュが破損していた場合は
+ * evict して network から取り直す（self-heal）。取得・キャッシュいずれの経路でも magic + CRC を検証し、
+ * 破損は throw する（fail loud）。検証済みなので `JtdDictionary.load` の再 CRC は省く。
+ *
+ * NOTE: Cache API は https / localhost の Secure Context でのみ利用可能。非対応環境では
+ *       fetch のみで取得し、キャッシュはスキップする。
+ */
+export const getDictionary = async (opts: GetDictionaryOptions = {}): Promise<JtdDictionary> => {
+  const buffer = await fetchVerifiedBuffer(opts);
+  return JtdDictionary.load(buffer, { verifyChecksums: false });
+};
+
+/**
+ * 検証済みの JTD1 バイト列を取得する（`getDictionary` の下位版）。返り値は `JtdDictionary.load` に
+ * そのまま渡せる。Worker への転送や独自キャッシュなど、バイト列を直接扱いたい場合に使う。
+ * 取得・キャッシュ・self-heal・CRC 検証は `getDictionary` と同一。
+ */
+export const fetchDictionaryBytes = async (
+  opts: GetDictionaryOptions = {},
+): Promise<Uint8Array> => new Uint8Array(await fetchVerifiedBuffer(opts));

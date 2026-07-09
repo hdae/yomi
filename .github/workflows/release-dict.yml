@@ -1,17 +1,18 @@
 name: Release (dictionary)
 
 # GitHub Release を publish すると、naist-jdic から辞書 JTD1 を再生成して
-# その Release にアセット添付する（ADR-0010）。JSR publish は release-jsr.yml が担い、
-# permission を分離する（この job は contents:write のみ・id-token は持たない＝最小権限）。
+# Hugging Face（hdae/yomi-dict dataset）へアップロードする。JSR publish は release-jsr.yml が担う。
+# 配布を HF にするのは GitHub の CORS 制約を避けるため（HF の resolve は単純 GET でワイルドカード CORS）。
 #
-# タグ規約: Release の tag は v プレフィックス付きで deno.jsonc の version に一致させる（例: v0.1.0, ADR-0010 tag v*）。
-#           アセット名は bare version（naist-jdic-<version>.jtd）＝JSR 公開版・ブラウザヘルパの想定と揃える。
+# タグ規約: Release の tag は v プレフィックス付きで deno.jsonc の version に一致させる（例: v0.1.0）。
+#           HF 上のファイル名は bare version（naist-jdic-<version>.jtd）＝JSR 公開版・ブラウザヘルパの想定と揃える。
+# 必要な secret: HF_TOKEN（hdae/yomi-dict への write 権限を持つ Hugging Face アクセストークン）。
 on:
   release:
     types: [published]
 
 permissions:
-  contents: write # Release アセットのアップロードのみ。
+  contents: read # チェックアウトのみ（配布先は Hugging Face）。
 
 jobs:
   dict:
@@ -52,15 +53,17 @@ jobs:
       - name: Verify JTD1 (magic / crc / size)
         run: deno run --allow-read scripts/verify_jtd.ts fixtures/naist-jdic.jtd
 
-      # bare version のアセット名で添付（loadDictionary の既定 URL naist-jdic-<version>.jtd に一致）。
-      # tag は v プレフィックス（v0.1.0）だが、アセット名は verify_tag が解決した bare version（0.1.0）を使う。
-      # コピー先 naist-jdic-*.jtd は gitignore 済み＝working tree を汚さない。
-      - name: Upload dictionary asset to release
+      # bare version のファイル名で HF へアップロード（getDictionary の既定 URL naist-jdic-<version>.jtd に一致）。
+      # tag は v プレフィックス（v0.1.0）だが、ファイル名は verify_tag が解決した bare version（0.1.0）を使う。
+      # コピー先 naist-jdic-*.jtd は gitignore 済み＝working tree を汚さない。HF_TOKEN は huggingface_hub が env から読む。
+      - name: Upload dictionary to Hugging Face
         env:
-          GH_TOKEN: ${{ github.token }}
-          TAG: ${{ github.event.release.tag_name }}
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
           VERSION: ${{ steps.ver.outputs.version }}
         run: |
           test -f fixtures/naist-jdic.jtd
           cp fixtures/naist-jdic.jtd "naist-jdic-${VERSION}.jtd"
-          gh release upload "$TAG" "naist-jdic-${VERSION}.jtd" --clobber
+          pipx install "huggingface_hub[cli]"
+          huggingface-cli upload --repo-type dataset hdae/yomi-dict \
+            "naist-jdic-${VERSION}.jtd" "naist-jdic-${VERSION}.jtd" \
+            --commit-message "Add naist-jdic ${VERSION}"
