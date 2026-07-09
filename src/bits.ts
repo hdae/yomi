@@ -16,13 +16,17 @@ export const popcount32 = (v: number): number => {
 
 const WORDS_PER_BLOCK = 8; // 256 bits
 
+/** succinct なビット列。rank/select を O(1)〜O(log n) で提供する読み取り専用実装。 */
 export class BitVector {
+  /** ビット本体を保持する Uint32Array（ゼロコピー参照）。 */
   readonly words: Uint32Array;
+  /** 有効なビット数。 */
   readonly bitLength: number;
   /** blockRank1[b] = ブロック b の先頭までの 1 の総数。 */
   private readonly blockRank1: Uint32Array;
   private readonly totalOnes: number;
 
+  /** words とその有効ビット長 bitLength から BitVector を構築し、rank ディレクトリを計算する。 */
   constructor(words: Uint32Array, bitLength: number) {
     if (bitLength > words.length * 32) {
       throw new Error(`bitLength ${bitLength} が words の容量を超えている`);
@@ -51,6 +55,7 @@ export class BitVector {
     this.totalOnes = acc;
   }
 
+  /** pos 番目のビットを取得する。 */
   get(pos: number): boolean {
     return ((this.words[pos >>> 5] >>> (pos & 31)) & 1) === 1;
   }
@@ -68,11 +73,13 @@ export class BitVector {
     return r;
   }
 
+  /** [0, pos) にある 0 の個数。pos は bitLength まで許す。 */
   rank0(pos: number): number {
     const p = Math.min(Math.max(pos, 0), this.bitLength);
     return p - this.rank1(p);
   }
 
+  /** ビット列内にある 1 の総数。 */
   get ones(): number {
     return this.totalOnes;
   }
@@ -136,6 +143,7 @@ export class BitWriter {
   private words: number[] = [];
   private len = 0;
 
+  /** ビットを 1 つ末尾に追記する。 */
   push(bit: boolean): void {
     const w = this.len >>> 5;
     if (w >= this.words.length) this.words.push(0);
@@ -143,10 +151,12 @@ export class BitWriter {
     this.len++;
   }
 
+  /** これまでに push したビット数。 */
   get bitLength(): number {
     return this.len;
   }
 
+  /** 書き込んだビット列を Uint32Array にまとめて返す。 */
   toWords(): Uint32Array {
     return Uint32Array.from(this.words);
   }

@@ -33,7 +33,7 @@ export const analyzeToNodes = (
   return nodes;
 };
 
-/** テキスト → FrontendResult（docs/japanese-tts-browser-handoff.md §5 の中間表現）。 */
+/** テキスト → FrontendResult（読み・アクセント核・句境界を持つ中間表現）。 */
 export const analyze = (
   dict: JtdDictionary,
   text: string,

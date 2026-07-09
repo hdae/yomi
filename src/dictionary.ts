@@ -17,59 +17,94 @@ import {
 } from "./format/layout.ts";
 import { crc32Hex } from "./format/crc32.ts";
 
+/** JTD1 辞書のメタデータ（META セクションを JSON デコードしたもの）。 */
 export type DictMeta = {
+  /** 辞書名。 */
   dictName: string;
+  /** 辞書のビルド元（リポジトリ・タグ）。 */
   source: { repo: string; tag: string };
+  /** 辞書をビルドした dict-builder のバージョン。 */
   builderVersion: string;
+  /** ビルド日時。 */
   buildDate: string;
+  /** 各種要素数の集計（surfaceCount 等）。 */
   counts: Record<string, number>;
   /** posId → [品詞, 細分類1, 細分類2, 細分類3, 活用型, 活用形] */
   posTable: string[][];
   /** chainRuleId → 結合規則文字列（"*" = なし） */
   chainRuleTable: string[];
+  /** 文字カテゴリ名の一覧（CHAR セクションの catTable と対応する順序）。 */
   charCategories: string[];
+  /** セクション名 → CRC32 チェックサム（16進）。load() の破損検証に使う。 */
   checksums: Record<string, string>;
+  /** 辞書データのライセンス表記。 */
   license: string;
 };
 
+/** 文字カテゴリ1件の定義（char.def 準拠）。 */
 export type CharCategoryInfo = {
+  /** カテゴリ名。 */
   name: string;
+  /** true なら既知語があっても常に未知語処理を起動する。 */
   invoke: boolean;
+  /** true なら同カテゴリの連続文字を1語にまとめる候補を出す。 */
   group: boolean;
+  /** 生成する未知語候補の文字数（0 = 生成しない）。 */
   length: number;
 };
 
+/** JTD1 コンテナから読み込んだランタイム辞書オブジェクト（全列ゼロコピー参照）。 */
 export class JtdDictionary {
+  /** 表層形 → surfaceId を引く LOUDS トライ。 */
   readonly trie: LoudsTrie;
   // LEXI（surfaceId → エントリ範囲 → ユニット範囲）
+  /** surfaceId → エントリ範囲 [entryIndex[i], entryIndex[i+1]) の開始位置索引（長さ surfaceCount+1）。 */
   readonly entryIndex: Uint32Array;
+  /** エントリ index → ユニット範囲 [unitIndex[i], unitIndex[i+1]) の開始位置索引（長さ entryCount+1）。 */
   readonly unitIndex: Uint32Array;
+  /** エントリごとの左文脈ID。 */
   readonly leftId: Uint16Array;
+  /** エントリごとの右文脈ID。 */
   readonly rightId: Uint16Array;
+  /** エントリごとの単語コスト。 */
   readonly cost: Int16Array;
+  /** エントリごとの品詞ID（meta.posTable の index）。 */
   readonly posId: Uint16Array;
+  /** エントリごとの活用連鎖規則ID（meta.chainRuleTable の index）。 */
   readonly chainRuleId: Uint8Array;
+  /** ユニットごとのアクセント型（未指定は 255）。 */
   readonly unitAccType: Uint8Array;
+  /** ユニットごとの表層形の文字数。 */
   readonly unitSurfLen: Uint8Array;
+  /** ユニットごとの発音の文字数。 */
   readonly unitPronLen: Uint8Array;
+  /** ユニットごとの発音の readPool 内オフセット。 */
   readonly unitPronOffset: Uint32Array;
+  /** 発音コードポイントの共有プール（unitPron/unitPronRaw が参照）。 */
   readonly readPool: Uint16Array;
   // CONN
   private readonly connData: Int16Array;
   private readonly connLeftSize: number;
   // CHAR
+  /** 文字カテゴリ定義の一覧（char.def 順）。 */
   readonly charCategories: CharCategoryInfo[];
   /** BMP コードポイント → 順序付きカテゴリ列（nibble×4、catId+1、0=終端）。 */
   readonly charCatsPacked: Uint16Array;
   /** DEFAULT カテゴリの id（非BMP文字のフォールバック）。 */
   readonly defaultCategoryId: number;
   // UNKD
+  /** カテゴリID → 未知語生成規則の範囲 [unkCatIndex[i], unkCatIndex[i+1]) の開始位置索引（長さ catCount+1）。 */
   readonly unkCatIndex: Uint32Array;
+  /** 未知語生成規則ごとの左文脈ID。 */
   readonly unkLeftId: Uint16Array;
+  /** 未知語生成規則ごとの右文脈ID。 */
   readonly unkRightId: Uint16Array;
+  /** 未知語生成規則ごとの単語コスト。 */
   readonly unkCost: Int16Array;
+  /** 未知語生成規則ごとの品詞ID（meta.posTable の index）。 */
   readonly unkPosId: Uint16Array;
 
+  /** 辞書のメタデータ。 */
   readonly meta: DictMeta;
 
   private constructor(fields: {

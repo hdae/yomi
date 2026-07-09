@@ -8,10 +8,13 @@ import type { OverlayDictionary } from "./overlay.ts";
 import { tokenizeToNodes } from "./lattice.ts";
 import { normalizeForDict, splitFragments } from "./normalize.ts";
 
+/** tokenize が返す1トークン。表層・範囲・品詞・発音・アクセント情報を持つ。 */
 export type Token = {
+  /** 表層形（正規化後テキストの部分文字列）。 */
   surface: string;
   /** 入力テキスト上の範囲（UTF-16 index）。 */
   start: number;
+  /** 範囲の終端（exclusive、UTF-16 index）。 */
   end: number;
   /** [品詞, 細分類1, 細分類2, 細分類3, 活用型, 活用形] */
   pos: readonly string[];
@@ -29,6 +32,7 @@ export type Token = {
    * undefined = 未設定（njd_set_accent_phrase が決める）。
    */
   chainFlag?: boolean;
+  /** 未知語（本辞書に一致せず unk.def テンプレートから生成された）かどうか。 */
   isUnknown: boolean;
 };
 

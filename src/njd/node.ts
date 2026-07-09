@@ -3,16 +3,24 @@
 // ノードの分割・併合・品詞書き換えを行うため可変構造にする。
 
 import type { MoraSpec } from "../mora_table.ts";
-import type { ChainRules } from "./chain_rules.ts";
+import type { AccentType, ChainRule, ChainRules } from "./chain_rules.ts";
 import type { PosFeatures } from "./pos.ts";
 
+// NjdNode の公開フィールドが構造的に参照するため、これらの型も公開型として再エクスポートする
+// （JSR の public API 完全性チェック: 公開型が非公開型を参照することを禁止する private-type-ref 対策）。
+export type { AccentType, ChainRule, ChainRules, MoraSpec, PosFeatures };
+
+/** モーラ1個分の NJD 表現（音韻情報 + 無声化フラグ）。 */
 export type NjdMora = {
+  /** モーラの音韻情報（カナ・子音・母音・擬似モーラ種別）。 */
   spec: MoraSpec;
   /** 母音無声化。dict の ’ 由来は最初から false。njd_set_unvoiced_vowel が確定する。 */
   voiced: boolean;
 };
 
+/** NJD ノード。トークンを起点に品詞・モーラ・アクセントを可変に保持する後処理単位。 */
 export type NjdNode = {
+  /** 表層文字列（正規化後）。 */
   surface: string;
   /** 可変の品詞素性（convert_to_kigou が書き換える）。 */
   pos: PosFeatures;
@@ -26,9 +34,11 @@ export type NjdNode = {
   pronOrig: string;
   /** アクセント核位置（語単位 → njd_set_accent_type が句先頭ノードを更新）。 */
   accent: number;
+  /** この語のアクセント結合規則（辞書の chain_rule 欄をパースしたもの）。null は規則なし。 */
   chainRule: ChainRules | null;
   /** undefined = 未設定(-1)。njd_set_accent_phrase が確定する。 */
   chainFlag: boolean | undefined;
+  /** 未知語由来のノードか。 */
   isUnknown: boolean;
 };
 
@@ -47,6 +57,7 @@ export const isTouten = (node: NjdNode): boolean =>
 export const isQuestion = (node: NjdNode): boolean =>
   node.moras.length === 1 && node.moras[0].spec.pseudo === "question";
 
+/** MoraSpec 列と無声化インデックス列（devoiced）から NjdMora 列を組み立てる。 */
 export const makeMoras = (specs: readonly MoraSpec[], devoiced: readonly number[]): NjdMora[] => {
   const set = new Set(devoiced);
   return specs.map((spec, i) => ({ spec, voiced: !set.has(i) }));

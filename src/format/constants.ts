@@ -11,7 +11,9 @@ export const fourCC = (name: string): number => {
   );
 };
 
+/** コンテナ先頭のマジックナンバー（4cc "JTD1" の LE u32）。 */
 export const MAGIC: number = fourCC("JTD1");
+/** コンテナフォーマットのバージョン番号。不一致は fail loud（マイグレーションしない）。 */
 export const FORMAT_VERSION = 1;
 
 /** ヘッダは 16 バイト固定。 */
@@ -21,6 +23,7 @@ export const SECTION_ENTRY_BYTES = 16;
 /** 全セクションのペイロード先頭は 8 バイト境界（MUST、ゼロコピー参照の前提）。 */
 export const SECTION_ALIGN = 8;
 
+/** コンテナが持つセクション名の一覧（4cc、宣言順）。 */
 export const SECTION_NAMES = [
   "META",
   "TRIE",
@@ -30,6 +33,7 @@ export const SECTION_NAMES = [
   "CHAR",
   "UNKD",
 ] as const;
+/** SECTION_NAMES の要素型（有効なセクション名のユニオン）。 */
 export type SectionName = (typeof SECTION_NAMES)[number];
 
 /** encoding ID。0 = v1 素朴エンコード。代替エンコーダを足すときに増える。 */

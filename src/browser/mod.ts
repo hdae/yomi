@@ -1,13 +1,16 @@
-// @hdae/yomi/browser — ブラウザ用の辞書キャッシュヘルパ（純ブラウザ API・依存ゼロ）。
-//
-// 辞書 JTD1（~19MB）は npm/jsr パッケージには同梱せず GitHub Release アセットとして配布する（ADR-0010）。
-// loadDictionary() は既定で「このパッケージ自身のバージョン」に対応する辞書を取得する＝コードと辞書の版が
-// 常に一致する（再現性）。バージョン固定＝不変コンテンツなので Cache API 優先で、次回以降 network なしで返す。
-// 破損キャッシュは真実源（network）から取り直す（self-heal）。取得したバイト列は JTD1 の magic とセクション
-// CRC で整合性を検証し、破損は throw する（fail loud。黙って劣化しない）。
-//
-// MUST: ここは実行時依存ゼロ。Cache API / fetch / TextDecoder などブラウザ標準のみを使う
-//        （src の外部 import は禁止。format 検証と VERSION は同 repo の純 TS モジュールを使う）。
+/**
+ * `@hdae/yomi/browser` — ブラウザ用の辞書キャッシュローダ（純ブラウザ API・依存ゼロ）。
+ *
+ * 辞書 JTD1（~19MB）はパッケージに同梱せず、versioned なリリースアセットとして実行時に取得する。
+ * `loadDictionary()` は既定で「このパッケージ自身の版」に対応する辞書を取得し（コードと辞書の版が
+ * 常に一致・再現性）、版固定＝不変なので Cache API 優先で次回以降は network なしで返す。破損キャッシュは
+ * 真実源（network）から取り直し（self-heal）、取得バイト列は JTD1 magic とセクション CRC で検証して
+ * 破損は throw する（fail loud・黙って劣化しない）。
+ *
+ * MUST: ここは実行時依存ゼロ。Cache API / fetch / TextDecoder などブラウザ標準のみを使う。
+ *
+ * @module
+ */
 
 import { JtdContainer } from "../format/reader.ts";
 import { crc32Hex } from "../format/crc32.ts";
@@ -17,14 +20,14 @@ export { VERSION };
 
 /**
  * 既定の取得元。@hdae/yomi の GitHub Release（`{version}` は取得時に解決）。tag は v プレフィックス、
- * アセット名は bare version（ADR-0010）。mirror / fork / 自ホストは `url` で上書きできる。
+ * アセット名は bare version。mirror / fork / 自ホストは `url` で上書きできる。
  */
 const DEFAULT_URL =
   "https://github.com/hdae/yomi/releases/download/v{version}/naist-jdic-{version}.jtd";
 
 const DEFAULT_CACHE_NAME = "yomi-dict";
 
-/** 辞書取得の指定。すべて任意で、既定は「このパッケージ自身の版を GitHub Release から取得」（ADR-0010）。 */
+/** 辞書取得の指定。すべて任意で、既定は「このパッケージ自身の版をリリースアセットから取得」。 */
 export type LoadDictionaryOptions = {
   /** 取得元 URL テンプレ（`{version}` を含む）または完成 URL。既定 = @hdae/yomi の GitHub Release。 */
   url?: string;

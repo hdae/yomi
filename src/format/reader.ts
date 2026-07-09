@@ -1,5 +1,5 @@
 // JTD1 コンテナの低レベル読み手: ヘッダ検証とセクションのゼロコピー切り出し。
-// レイアウトの正は docs/jtd1-format.md。書き手は packages/dict-builder/src/container_writer.ts。
+// レイアウトの正は docs/jtd1-format.md。書き手は dict-builder/src/container_writer.ts。
 //
 // MUST: ここでは一切コピーしない。呼び出し側が TypedArray ビューを作れるよう
 // (buffer, byteOffset, length) を返すだけに徹する。
@@ -13,7 +13,9 @@ import {
   SECTION_ENTRY_BYTES,
 } from "./constants.ts";
 
+/** JTD1 セクションテーブルの1エントリ（バッファ内の位置とエンコード種別）。 */
 export type SectionView = {
+  /** セクションのエンコーダ ID（0 = v1 素朴）。 */
   encoding: number;
   /** buf 先頭からのバイトオフセット（8 の倍数を保証）。 */
   offset: number;
@@ -21,10 +23,13 @@ export type SectionView = {
   length: number;
 };
 
+/** JTD1 バイナリを受け取り、ヘッダ検証済みのセクション表を保持する低レベル読み手。 */
 export class JtdContainer {
+  /** 保持している JTD1 全体のバッファ。 */
   readonly buffer: ArrayBuffer;
   private readonly sections: Map<string, SectionView>;
 
+  /** ヘッダ（magic/formatVersion）とセクション境界を検証して構築する（破損は throw）。 */
   constructor(buffer: ArrayBuffer) {
     this.buffer = buffer;
     const dv = new DataView(buffer);
@@ -66,6 +71,7 @@ export class JtdContainer {
     return s;
   }
 
+  /** セクションが存在するか。 */
   has(name: string): boolean {
     return this.sections.has(name);
   }

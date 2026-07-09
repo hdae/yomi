@@ -7,6 +7,7 @@
 
 import type { PosFeatures } from "./pos.ts";
 
+/** アクセント結合型（jpreprocess AccentType 相当。F/C/P + 数字、または規則なしの "none"）。 */
 export type AccentType =
   | "F1"
   | "F2"
@@ -24,11 +25,13 @@ export type AccentType =
   | "P14"
   | "none";
 
+/** 1つの結合規則（結合型 + 加算値）。 */
 export type ChainRule = {
   accentType: AccentType;
   addType: number;
 };
 
+/** 前語の品詞スロット別に選べるアクセント結合規則の集合（parseChainRules の戻り値）。 */
 export type ChainRules = {
   default?: ChainRule;
   doushi?: ChainRule;

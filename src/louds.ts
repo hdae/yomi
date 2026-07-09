@@ -16,19 +16,25 @@
 
 import type { BitVector } from "./bits.ts";
 
+/** commonPrefixSearch が1件のヒットごとにコールバックへ渡す情報。 */
 export type PrefixHit = {
+  /** ヒットした表層形の surfaceId。 */
   surfaceId: number;
   /** 検索開始位置からではなく、文字列先頭からの終端 index（排他）。 */
   end: number;
 };
 
+/** LOUDS 符号化された読み取り専用トライ。表層形から surfaceId を引く。 */
 export class LoudsTrie {
+  /** トライのノード総数。 */
   readonly nodeCount: number;
+  /** 登録されている表層形の総数。 */
   readonly surfaceCount: number;
   private readonly lbs: BitVector;
   private readonly labels: Uint16Array;
   private readonly terminal: BitVector;
 
+  /** 符号化済みの LBS・ラベル配列・terminal ビット列などから LoudsTrie を構築する。 */
   constructor(
     lbs: BitVector,
     labels: Uint16Array,

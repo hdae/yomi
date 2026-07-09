@@ -1,7 +1,7 @@
 // 統合テストが使う辞書パスの解決ヘルパ（テスト専用・公開 API ではない）。
 //
-// 辞書 naist-jdic.jtd は BSD-3-Clause で別管理のため repo に同梱しない
-// （ADR-0010）。CI では `deno task build-dict` で fixtures/naist-jdic.jtd を
+// 辞書 naist-jdic.jtd は BSD-3-Clause で別管理のため repo に同梱しない。
+// CI では `deno task build-dict` で fixtures/naist-jdic.jtd を
 // 生成してから統合テストを走らせる。手元では YOMI_DICT_PATH で任意のビルド済み
 // 辞書を指せる。
 //

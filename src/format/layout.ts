@@ -6,8 +6,10 @@
 // セクション = [u32 スカラヘッダ列][型付き配列列]。各配列の先頭は要素サイズ境界に
 // パディングされる。配列長はスカラヘッダから導出する（自己記述）。
 
+/** セクション内のスカラ・配列要素が取り得る型（バイト幅の元）。 */
 export type FieldType = "u32" | "u16" | "i16" | "u8";
 
+/** 各 FieldType のバイト幅（アラインメント・オフセット計算に使う）。 */
 export const FIELD_BYTES: Record<FieldType, number> = {
   u32: 4,
   u16: 2,
@@ -15,29 +17,41 @@ export const FIELD_BYTES: Record<FieldType, number> = {
   u8: 1,
 };
 
+/** セクション内の型付き配列1本の宣言（名前・要素型・要素数の導出方法）。 */
 export type ArrayField = {
+  /** 配列名（DecodedSection.arrays のキーになる）。 */
   name: string;
+  /** 要素型。 */
   type: FieldType;
   /** スカラヘッダ値から要素数を導出する。 */
   length: (h: Record<string, number>) => number;
 };
 
+/** 1セクションの構造宣言（先頭の u32 スカラヘッダ列 + 後続の型付き配列列）。 */
 export type SectionLayout = {
   /** u32 スカラの名前列（ペイロード先頭に順に並ぶ）。 */
   header: readonly string[];
+  /** ヘッダに続く型付き配列列（宣言順にパディングを挟んで配置される）。 */
   arrays: readonly ArrayField[];
 };
 
+/** computeLayout が確定した、配列1本の実際の配置。 */
 export type FieldPlacement = {
+  /** 配列名。 */
   name: string;
+  /** 要素型。 */
   type: FieldType;
   /** セクションペイロード先頭からのバイトオフセット。 */
   byteOffset: number;
+  /** 要素数。 */
   elemCount: number;
 };
 
+/** computeLayout の戻り値: 全配列の配置とセクションペイロードの総バイト長。 */
 export type LayoutPlan = {
+  /** 各配列の配置一覧（layout.arrays と同じ順）。 */
   fields: FieldPlacement[];
+  /** ヘッダと全配列を含むセクションペイロードの総バイト長。 */
   totalBytes: number;
 };
 
@@ -66,6 +80,7 @@ export const computeLayout = (
 
 // ---- 各セクションのレイアウト定義（docs/jtd1-format.md v1） ----
 
+/** TRIE セクション（LOUDS トライ: 表層形 → surfaceId）のレイアウト定義。 */
 export const TRIE_LAYOUT: SectionLayout = {
   header: [
     "nodeCount",
@@ -82,6 +97,7 @@ export const TRIE_LAYOUT: SectionLayout = {
   ],
 };
 
+/** LEXI セクション（表層形→エントリ→ユニットの索引と各種属性）のレイアウト定義。 */
 export const LEXI_LAYOUT: SectionLayout = {
   header: ["surfaceCount", "entryCount", "unitCount"],
   arrays: [
@@ -99,11 +115,13 @@ export const LEXI_LAYOUT: SectionLayout = {
   ],
 };
 
+/** READ セクション（発音のコードポイントを格納する共有プール）のレイアウト定義。 */
 export const READ_LAYOUT: SectionLayout = {
   header: ["poolLength"],
   arrays: [{ name: "pool", type: "u16", length: (h) => h.poolLength }],
 };
 
+/** CONN セクション（左右文脈IDの連接コスト行列）のレイアウト定義。 */
 export const CONN_LAYOUT: SectionLayout = {
   header: ["rightSize", "leftSize"],
   arrays: [
@@ -112,6 +130,7 @@ export const CONN_LAYOUT: SectionLayout = {
   ],
 };
 
+/** CHAR セクション（文字カテゴリ定義とコードポイント→カテゴリ写像）のレイアウト定義。 */
 export const CHAR_LAYOUT: SectionLayout = {
   header: ["catCount"],
   arrays: [
@@ -125,6 +144,7 @@ export const CHAR_LAYOUT: SectionLayout = {
   ],
 };
 
+/** UNKD セクション（未知語の文字カテゴリ別生成規則）のレイアウト定義。 */
 export const UNKD_LAYOUT: SectionLayout = {
   header: ["catCount", "recordCount"],
   arrays: [
@@ -138,7 +158,9 @@ export const UNKD_LAYOUT: SectionLayout = {
 
 // ---- 読み手側の汎用デコード ----
 
+/** decodeSection の戻り値: ヘッダのスカラ値と、配列のゼロコピービューの組。 */
 export type DecodedSection = {
+  /** ヘッダ由来のスカラ値（名前→値）。 */
   scalars: Record<string, number>;
   /** name → ゼロコピー TypedArray ビュー。 */
   arrays: Record<string, Uint32Array | Uint16Array | Int16Array | Uint8Array>;

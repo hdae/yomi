@@ -1,6 +1,6 @@
 // ラティス構築 + Viterbi 最小コスト経路（lindera 3.0.7 viterbi.rs 互換）。
 // 仕様の根拠: jp-oracle が使う lindera の実装を精査した互換仕様
-// （オラクル互換の MUST。要点は以下に列挙、詳細は docs/tokenizer-compat.md）。
+// （オラクル互換の MUST。要点は以下に列挙）。
 //
 // - 入力は normalize.ts の正規化・文分割済み「断片」。BOS/EOS は断片ごとにリセット
 // - 到達不能な開始位置（そこで終わるエッジが無い）では既知語・未知語とも生成しない
@@ -14,8 +14,11 @@
 import type { JtdDictionary } from "./dictionary.ts";
 import type { OverlayDictionary } from "./overlay.ts";
 
+/** ラティスの1エッジ（表層区間 [start,end) と、由来・連接コスト情報）。 */
 export type LatticeNode = {
+  /** 表層の開始位置（UTF-16）。 */
   start: number;
+  /** 表層の終了位置（UTF-16、排他）。 */
   end: number;
   /** LEXI エントリ index。未知語は -1。 */
   entryIdx: number;
@@ -23,8 +26,11 @@ export type LatticeNode = {
   unkIdx: number;
   /** 修正辞書エントリ index。オーバーレイ由来のみ >=0。 */
   overlayIdx: number;
+  /** 左文脈 ID（連接コスト行列の行）。 */
   leftId: number;
+  /** 右文脈 ID（連接コスト行列の列）。 */
   rightId: number;
+  /** 語コスト。 */
   wordCost: number;
 };
 

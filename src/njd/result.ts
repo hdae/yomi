@@ -1,4 +1,4 @@
-// NJD ノード列 → 中間表現 FrontendResult（docs/japanese-tts-browser-handoff.md §5）。
+// NJD ノード列 → 中間表現 FrontendResult（読み・モーラ・アクセント核・句境界）。
 // アクセント句のグルーピング規約は jp-oracle convert.rs と同一:
 // - 実モーラを持つノードを chainFlag でグルーピング。句核 = 句先頭ノードの accent
 // - 記号ノード（実モーラ0）は句を作らず、直前の句の pauseAfter を決める
@@ -7,6 +7,7 @@
 import { moraSize, type NjdNode } from "./node.ts";
 import { nodeToMoras } from "../phonemes.ts";
 
+/** 1モーラ分の読み・音素・無声化。アクセント句を構成する最小単位。 */
 export type Mora = {
   /** カタカナ1モーラ（拗音は1モーラ）。 */
   kana: string;
@@ -18,18 +19,25 @@ export type Mora = {
   devoiced?: boolean;
 };
 
+/** アクセント句（1つのピッチ核を持つモーラ列と、句末のポーズ）。 */
 export type AccentPhrase = {
+  /** 句を構成するモーラ列。 */
   moras: Mora[];
   /** 1-origin。0 = 平板（核なし）。 */
   accentNucleus: number;
+  /** 句末のポーズ長。読点=short / 句点・文末=long。 */
   pauseAfter: "none" | "short" | "long";
 };
 
+/** フロントエンドの最終出力（正規化テキストとアクセント句列）。 */
 export type FrontendResult = {
+  /** 解析に用いた正規化済みテキスト。 */
   normalizedText: string;
+  /** アクセント句の列。 */
   accentPhrases: AccentPhrase[];
 };
 
+/** NJD ノード列をアクセント句にまとめ、FrontendResult を組む。 */
 export const buildResult = (normalizedText: string, nodes: readonly NjdNode[]): FrontendResult => {
   const phrases: AccentPhrase[] = [];
 
@@ -57,6 +65,7 @@ export const buildResult = (normalizedText: string, nodes: readonly NjdNode[]): 
   return { normalizedText, accentPhrases: phrases };
 };
 
+/** 記号ノード（読点/句点）が直前の句に与えるポーズ長を返す。記号でなければ undefined。 */
 export const symbolPause = (node: NjdNode): "short" | "long" | undefined => {
   if (node.pos[0] !== "記号") return undefined;
   if (node.pos[1] === "読点") return "short";

@@ -11,6 +11,7 @@ import type { JtdDictionary } from "./dictionary.ts";
 import { normalizeForDict } from "./normalize.ts";
 import { splitMorasWithRanges } from "./mora_table.ts";
 
+/** 修正辞書エントリ（JSON で与えるユーザー入力形式）。 */
 export type OverlayEntry = {
   /** 表層形。正規化済み形（normalizeForDict の不動点）で与えること。 */
   surface: string;
@@ -26,27 +27,39 @@ export type OverlayEntry = {
   cost?: number;
 };
 
+/** OverlayEntry を本辞書の文脈IDで解決済みの内部形式（ラティス投入用）。 */
 export type ResolvedOverlayEntry = {
+  /** 表層形。 */
   surface: string;
+  /** 発音カタカナ。 */
   reading: string;
+  /** アクセント型。 */
   accentType: number;
+  /** アクセント結合規則。"*" は規則なし。 */
   chainRule: string;
+  /** 品詞素性（本辞書 posTable 上の完全形）。 */
   pos: readonly string[];
+  /** 語コスト。 */
   cost: number;
+  /** 連接コスト行列における左文脈ID。 */
   leftId: number;
+  /** 連接コスト行列における右文脈ID。 */
   rightId: number;
 };
 
 const DEFAULT_POS = ["名詞", "固有名詞", "一般"] as const;
 const DEFAULT_COST = -10000;
 
+/** 解決済み修正辞書。表層からのエントリ検索（common prefix search）を提供する。 */
 export class OverlayDictionary {
+  /** 解決済みエントリ列（ラティスノードの overlayIdx が指す配列）。 */
   readonly entries: ResolvedOverlayEntry[];
   /** 表層の最大長（UTF-16）。lookup の走査上限。 */
   private readonly maxLen: number;
   /** 表層 → エントリ index 列。 */
   private readonly bySurface: Map<string, number[]>;
 
+  /** OverlayEntry 配列を本辞書に対して解決し、表層検索用の索引を構築する。 */
   constructor(dict: JtdDictionary, entries: readonly OverlayEntry[]) {
     this.entries = entries.map((e) => resolveEntry(dict, e));
     this.bySurface = new Map();

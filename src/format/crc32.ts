@@ -11,6 +11,7 @@ const TABLE: Uint32Array = (() => {
   return t;
 })();
 
+/** バイト列の CRC-32（IEEE 802.3）を計算する。 */
 export const crc32 = (bytes: Uint8Array): number => {
   let c = 0xffffffff;
   for (let i = 0; i < bytes.length; i++) {
