@@ -11,7 +11,7 @@ import {
   SECTION_ALIGN,
   SECTION_ENTRY_BYTES,
   type SectionLayout,
-} from "@hdae/yomi";
+} from "@hdae/yomi/format";
 
 export type SectionPayload = {
   name: string; // 4cc

@@ -11,7 +11,7 @@ import {
   READ_LAYOUT,
   TRIE_LAYOUT,
   UNKD_LAYOUT,
-} from "@hdae/yomi";
+} from "@hdae/yomi/format";
 import { FEATURE_SEP, featureKey, Interner, type LexicalEntry, parseCsv } from "./csv.ts";
 import { parseCharDef, parseMatrixDef, parseUnkDef } from "./defs.ts";
 import { buildLouds } from "./louds_builder.ts";

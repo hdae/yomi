@@ -1,4 +1,4 @@
-import { BitVector, LoudsTrie } from "@hdae/yomi";
+import { BitVector, LoudsTrie } from "@hdae/yomi/format";
 import { buildLouds, type LoudsBuild } from "./louds_builder.ts";
 
 const assert = (cond: boolean, msg: string) => {

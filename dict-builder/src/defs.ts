@@ -1,7 +1,7 @@
 // char.def / unk.def / matrix.def のパーサ。
 // フォーマットは MeCab 由来（naist-jdic v0.1.3 同梱の実ファイルで確認済み）。
 
-import { CONTEXT_ID_DIMENSION } from "@hdae/yomi";
+import { CONTEXT_ID_DIMENSION } from "@hdae/yomi/format";
 
 export type CharCategory = {
   name: string;

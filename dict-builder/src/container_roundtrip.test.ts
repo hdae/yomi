@@ -7,7 +7,7 @@ import {
   READ_LAYOUT,
   type SectionLayout,
   TRIE_LAYOUT,
-} from "@hdae/yomi";
+} from "@hdae/yomi/format";
 import { encodeSection, writeContainer } from "./container_writer.ts";
 
 const assert = (cond: boolean, msg: string) => {

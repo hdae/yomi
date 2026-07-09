@@ -5,7 +5,7 @@
     "build-dict": "deno run -A src/build.ts"
   },
   "imports": {
-    "@hdae/yomi": "../src/mod.ts"
+    "@hdae/yomi/format": "../src/format/mod.ts"
   },
   "fmt": {
     "lineWidth": 100,
