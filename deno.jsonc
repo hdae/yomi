@@ -1,10 +1,17 @@
 {
   "name": "@hdae/yomi",
   "version": "0.1.0",
-  // 公開 API。コア（.）はモデル非依存の中立 G2P。JTD1 コーデックは /format、
-  // ブラウザ辞書ローダは /browser に分離。モデル固有アダプタは持たない（docs/decisions/0001）。
+  // 公開 API。コア（.）はモデル非依存の中立 G2P の薄いファサード。細粒度の言語モデルは
+  // リファレンス実装（jpreprocess/pyopenjtalk）に倣いドメイン別サブパスで公開する。
+  // JTD1 コーデックは /format、ブラウザ辞書ローダは /browser。モデル固有アダプタは持たない
+  // （docs/decisions/0001）。
   "exports": {
     ".": "./src/mod.ts",
+    "./text": "./src/text/mod.ts",
+    "./dict": "./src/dict/mod.ts",
+    "./tokenizer": "./src/tokenizer/mod.ts",
+    "./njd": "./src/njd/mod.ts",
+    "./g2p": "./src/g2p/mod.ts",
     "./format": "./src/format/mod.ts",
     "./browser": "./src/browser/mod.ts"
   },

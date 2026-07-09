@@ -26,6 +26,7 @@ import {
 } from "./pos.ts";
 import type { NjdNode } from "./types.ts";
 
+/** 隣接2ノードの品詞からアクセント句境界（chainFlag）を決める（njd_set_accent_phrase 移植）。 */
 export const njdSetAccentPhrase = (nodes: NjdNode[]): void => {
   for (let i = 1; i < nodes.length; i++) {
     if (nodes[i].chainFlag === undefined) {

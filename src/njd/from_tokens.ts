@@ -8,6 +8,7 @@ import { parseChainRules } from "./chain_rules.ts";
 import { makeMoras } from "./node.ts";
 import type { NjdNode } from "./types.ts";
 
+/** Token 列 → NJD ノード列（jpreprocess NJD::from_tokens / NJDNode::load 相当）。 */
 export const nodesFromTokens = (tokens: readonly Token[]): NjdNode[] => {
   const nodes: NjdNode[] = [];
   for (const t of tokens) {

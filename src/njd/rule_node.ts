@@ -7,6 +7,7 @@ import { parseChainRules } from "./chain_rules.ts";
 import { makeMoras } from "./node.ts";
 import type { NjdNode } from "./types.ts";
 
+/** ルール定数（CSV 行）から NjdNode を生成する（jpreprocess NJDNode::new_single 互換）。 */
 export const makeRuleNode = (line: string): NjdNode => {
   const f = line.split(",");
   if (f.length < 12 || f.length > 13) {

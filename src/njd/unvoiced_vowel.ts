@@ -36,6 +36,7 @@ const UNVOICED_CONSONANTS = new Set([
   "py",
 ]);
 
+/** 母音無声化フラグ（tri-state）を確定する（njd_set_unvoiced_vowel 移植）。 */
 export const njdSetUnvoicedVowel = (nodes: NjdNode[]): void => {
   const states: MoraState[] = [];
   let midx = 0;

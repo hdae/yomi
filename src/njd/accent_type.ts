@@ -7,6 +7,7 @@ import { isKazu } from "./pos.ts";
 import { moraSize } from "./node.ts";
 import type { NjdNode } from "./types.ts";
 
+/** chain_flag で連結された句の核位置を句先頭ノードの accent に書き込む（njd_set_accent_type 移植）。 */
 export const njdSetAccentType = (nodes: NjdNode[]): void => {
   if (nodes.length === 0) return;
   let topNodeI = 0;

@@ -254,6 +254,7 @@ const convertNumerical = (nodes: NjdNode[], seq: Sequence): number => {
 
 // ---- 本体 ----
 
+/** 数字列を順読み/桁読みで判別し、桁読みなら位取り語ノードを挿入する（njd_digit_sequence 移植）。 */
 export const njdDigitSequence = (nodes: NjdNode[]): NjdNode[] => {
   // 1. 未知語の複数桁数字ノード（読点擬似モーラ1個 + 名詞,数）を1桁ずつに展開する。
   for (let i = 0; i < nodes.length; i++) {

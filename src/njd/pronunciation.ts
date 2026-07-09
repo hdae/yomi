@@ -12,6 +12,7 @@ import { convertToKigou, isDoushi, isFiller, isJodoushi } from "./pos.ts";
 import { makeMoras, moraSize } from "./node.ts";
 import type { NjdNode } from "./types.ts";
 
+/** 未知語・記号を表層のかな解析でモーラ化し、無音除去・かな連続併合などを行う（njd_set_pronunciation 移植）。 */
 export const njdSetPronunciation = (nodes: NjdNode[]): NjdNode[] => {
   // ---- 1. モーラ0ノードの表層かな解析と分割 ----
   let result: NjdNode[] = [];
