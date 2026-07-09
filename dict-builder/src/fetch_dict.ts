@@ -1,10 +1,10 @@
 // naist-jdic v0.1.3 の辞書ソースを取得し、data/naist-jdic/ に展開配置する。
-// ADR-0003（docs/decisions/0003-dict-source-pinning.md）に基づき、
+// ADR-0004（docs/decisions/0004-dict-source-pinning.md）に基づき、
 // タグ固定 + SHA-256 検証つきでダウンロードする（リポジトリには同梱しない）。
 //
 // 実行: deno run -A src/fetch_dict.ts [--force]
 
-// ADR-0003: ソースは jpreprocess/naist-jdic の tag v0.1.3 に固定する。
+// ADR-0004: ソースは jpreprocess/naist-jdic の tag v0.1.3 に固定する。
 // 改版が必要な場合はタグ更新の ADR を追加してからここを書き換える。
 const SOURCE_URL = "https://github.com/jpreprocess/naist-jdic/archive/refs/tags/v0.1.3.tar.gz";
 
@@ -16,7 +16,7 @@ const ARCHIVE_ROOT_DIR = "naist-jdic-0.1.3";
 const EXPECTED_TARBALL_SHA256 = "8375d4b337d410fc8d202e027c24e748d890f243c0c1b5bab1fa58777f93d02d";
 
 // data/naist-jdic/ に配置する必要ファイルと、それぞれの期待 SHA-256（同時点で実測）。
-// unidic-csj.csv・feature.def・README.md・CHANGELOG.md は初期スコープ外（ADR-0003）。
+// unidic-csj.csv・feature.def・README.md・CHANGELOG.md は初期スコープ外（ADR-0004）。
 const REQUIRED_FILES: Record<string, string> = {
   "naist-jdic.csv": "140e0b8189732fa1e65d22079f399b895cb5d7e6ba8b1b1afed656d3fb10b84e",
   "matrix.def": "b8ff0c65c1024680ebf81b820d789435c64b039d077666e67b34093f041eb36a",

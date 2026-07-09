@@ -9,7 +9,7 @@
 
 ## ドキュメント索引
 
-- [docs/decisions/](docs/decisions/) — ADR（`0001` = 中立コア方針 / `0002` = 公開APIの面 / `0003` = 辞書配布(HF/gzip)）
+- [docs/decisions/](docs/decisions/) — ADR（`0001` = 中立コア方針 / `0002` = 公開APIの面 / `0003` = 辞書配布(HF/gzip) / `0004` = 辞書ソース固定(naist-jdic v0.1.3)）
 - [docs/jtd1-format.md](docs/jtd1-format.md) — 辞書バイナリ JTD1 のフォーマット仕様
 - 分かち書きの詳細互換仕様（lindera/jpreprocess のオラクル精査）や G2P の設計背景は、研究リポジトリ
   `../browser-tts`（`docs/tokenizer-compat.md` ほか）を参照。
