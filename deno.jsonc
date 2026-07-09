@@ -1,10 +1,10 @@
 {
   "name": "@hdae/yomi",
   "version": "0.1.0",
-  // 公開 API。コア（.）はモデル非依存。SBV2 変換は /sbv2、ブラウザ辞書ヘルパは /browser に分離（ADR-0010）。
+  // 公開 API。コア（.）はモデル非依存の中立 G2P。ブラウザ辞書ヘルパは /browser に分離。
+  // モデル固有アダプタは yomi に持たない（docs/decisions/0001）。
   "exports": {
     ".": "./src/mod.ts",
-    "./sbv2": "./src/sbv2.ts",
     "./browser": "./src/browser/mod.ts"
   },
   "tasks": {

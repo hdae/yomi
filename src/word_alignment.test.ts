@@ -1,14 +1,15 @@
-// wordPhoneAlignment の仕様と、toSbv2PhoneTone との音素一致（ADR-0008 決定3）を検証する。
+// wordPhoneAlignment の仕様と、コア結果（accentPhrases）との音素一致を検証する。
 //
 // 中核の表明テスト（MUST）:
 //   wordPhoneAlignment(nodes).flatMap(w => w.phones)
-//     === toSbv2PhoneTone(analyze(...)).phones の両端 "_" を除いた中身
-// が全文で完全一致すること。共有ヘルパ（nodeToMoras/moraToPhones/pausePunct）で
-// 音素生成を一元化しているので、これは構造的に成り立つはずだが、走査ロジック
-// （句グルーピング・句読点位置・文末 long）の一致を実辞書で網羅検証する。
+//     === analyze(...).accentPhrases から素直に組んだ音素列
+// が全文で完全一致すること。node 走査（アライメント）と句構造走査（コア結果）は
+// 別経路なので、共有ヘルパ（nodeToMoras/moraToPhones/pausePunct）による音素生成の
+// 一元化と、走査ロジック（句グルーピング・句読点位置・文末 long）の一致を実辞書で
+// 網羅検証する。
 
-import { wordPhoneAlignment } from "./word_alignment.ts";
-import { toSbv2PhoneTone } from "./sbv2_bridge.ts";
+import { pausePunct, wordPhoneAlignment } from "./word_alignment.ts";
+import { moraToPhones } from "./phonemes.ts";
 import { JtdDictionary } from "./dictionary.ts";
 import { analyze, analyzeToNodes } from "./analyze.ts";
 import { dictAvailable, dictPath } from "./_dict_path.ts";
@@ -67,7 +68,7 @@ const CORPUS = [
 
 Deno.test({
   name:
-    "wordPhoneAlignment(実辞書): アライメント音素連結 == toSbv2PhoneTone 両端PAD除去（全文一致）",
+    "wordPhoneAlignment(実辞書): アライメント音素連結 == コア結果(accentPhrases)由来の音素列（全文一致）",
   ignore: !dictExists,
   fn() {
     const dict = loadDict();
@@ -75,10 +76,16 @@ Deno.test({
       const result = analyze(dict, text);
       const nodes = analyzeToNodes(dict, text);
       const align = wordPhoneAlignment(nodes);
-      const bridge = toSbv2PhoneTone(result);
-      const innerBridge = bridge.phones.slice(1, -1); // 両端 "_" を除く
+      // 期待: コアのアクセント句列から素直に音素を組む（両端 PAD なし）。node 走査
+      // （align）と句構造走査（result）の別経路が同じ音素列に落ちることを検証する。
+      const expected: string[] = [];
+      for (const phrase of result.accentPhrases) {
+        for (const mora of phrase.moras) expected.push(...moraToPhones(mora));
+        const punct = pausePunct(phrase.pauseAfter);
+        if (punct !== undefined) expected.push(punct);
+      }
       const flatAlign = align.flatMap((w) => w.phones);
-      assertEq(flatAlign, innerBridge, `[${text}] 音素連結不一致`);
+      assertEq(flatAlign, expected, `[${text}] 音素連結不一致`);
     }
   },
 });

@@ -1,13 +1,15 @@
-// モーラ → SBV2 音素列の展開（唯一の実装）。
-// sbv2_bridge.ts（given_phone 生成）と word_alignment.ts（語アライメント）が
-// 共有し、音素生成ロジックの二経路化を構造的に防ぐ（ADR-0008 決定3）。
+// モーラ → 音素列の展開（唯一の実装。モデル非依存の中立表現）。
+// buildResult（result.ts）と wordPhoneAlignment（word_alignment.ts）が共有し、
+// 音素生成ロジックの二経路化を構造的に防ぐ。
 //
-// 仕様の出典は docs/sbv2-g2p-interface.md（§9-1/2/4）:
+// 変換規則:
 // - 促音 vowel==="cl" → ["q"]（consonant 無視）
 // - 撥音 vowel==="N" → ["N"]（consonant 無視）
 // - それ以外 → consonant があれば [consonant, vowel]、なければ [vowel]
 // - 長音・"-" は result.ts が Mora.vowel に解決済みなので、ここでは通常母音として出す。
-// - devoiced は SBV2 に無声化表現が無いため音素には出さない（§1, §9-8）。
+// - devoiced（無声化）は音素記号には出さない（Mora.devoiced に別途保持）。
+// NOTE: "q"(促音) は表記系の一慣習、"N"(撥音) は広く共通。モデル固有の梱包
+//       （PAD・トーン規約）は yomi では持たない（docs/decisions/0001）。
 
 import type { Mora } from "./njd/result.ts";
 import type { NjdNode } from "./njd/node.ts";
@@ -22,7 +24,7 @@ export const moraToPhones = (mora: Mora): string[] => {
 /**
  * NjdNode を FrontendResult の Mora 列に加工する（唯一の実装）。
  * buildResult（アクセント句組み立て）と wordPhoneAlignment（語アライメント）が
- * 共有し、モーラ加工の二経路化を防ぐ（ADR-0008 決定3）。
+ * 共有し、モーラ加工の二経路化を防ぐ。
  *
  * - 擬似モーラ（読点・？等の pseudo）はスキップ。
  * - 長音（vowel==="long"）は直前モーラの母音を引き継ぐ（音響モデルへの入力仕様）。

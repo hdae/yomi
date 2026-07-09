@@ -1,6 +1,7 @@
 // @hdae/yomi — 日本語テキストフロントエンド（テキスト → 読み＋アクセント＋句境界）。
-// これは中立コア＝モデル非依存の G2P。SBV2 固有の音素・トーン変換は
-// サブパス export @hdae/yomi/sbv2（src/sbv2.ts）へ分離してある（ADR-0010）。
+// これは中立コア＝モデル非依存の G2P。モデル固有の音素・トーン梱包は yomi に持たず、
+// 中立の建材（moraToPhones / moraTones / pausePunct / wordPhoneAlignment）を export し
+// 呼び出し側で組む（docs/decisions/0001）。
 // MUST: このパッケージは実行時依存ゼロを維持する（ブラウザ/Node/Deno/Workers で同一動作）。
 
 // 単一の真実源は src/constants.ts（deno.jsonc の焼き込みコピー）。ここで literal を書かない
@@ -36,7 +37,8 @@ export {
 } from "./overlay.ts";
 export { type AccentPhrase, buildResult, type FrontendResult, type Mora } from "./njd/result.ts";
 export { moraToPhones, nodeToMoras } from "./phonemes.ts";
-export { wordPhoneAlignment, type WordPhones } from "./word_alignment.ts";
+export { moraTones } from "./tones.ts";
+export { pausePunct, wordPhoneAlignment, type WordPhones } from "./word_alignment.ts";
 export { isTouten, moraSize, type NjdMora, type NjdNode } from "./njd/node.ts";
 export {
   type ArrayField,
