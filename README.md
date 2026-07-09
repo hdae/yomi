@@ -1,54 +1,53 @@
 # @hdae/yomi
 
 A pure-TypeScript Japanese TTS text frontend (G2P) that runs fully local in the
-browser. It converts text into **readings**, **pitch accent** (accent nucleus
-position), and **accent-phrase boundaries**.
+browser.
 
-## Features
+ブラウザ上で完全ローカル動作する、純 TypeScript の日本語 TTS テキストフロントエンド（G2P）。
+テキストを **読み・アクセント（ピッチ核位置）・アクセント句境界** に変換します。
 
-- **Accent-aware G2P**: Emits readings, accent nucleus positions, accent-phrase
-  boundaries, and pauses — the piece browser TTS stacks are missing for Japanese
-- **Zero runtime dependencies**: Identical behavior across the browser, Deno,
-  Node, and Workers — no external process, no WASM, no GPL dependency
-- **OpenJTalk-compatible**: naist-jdic dictionary, lindera-compatible
-  tokenization, and jpreprocess-compatible NJD accent post-processing
-- **Model-neutral**: Emits neutral readings, moras, phonemes, and per-mora tones;
-  build any model's phone/tone packaging at the call site
-- **Cached dictionary**: `@hdae/yomi/browser` caches the dictionary via the Cache
-  API with magic + CRC integrity checks and self-healing
+## 特徴
 
-## Installation
+- **アクセント付き G2P**: 読み・アクセント核位置・アクセント句境界・ポーズを出力。ブラウザ向け
+  TTS に欠けていた「日本語のアクセント付き G2P」を埋めます
+- **実行時依存ゼロ**: ブラウザ / Deno / Node / Workers で同一動作。外部プロセス・WASM・GPL 依存なし
+- **OpenJTalk 系互換**: naist-jdic 辞書・lindera 互換の分かち書き・jpreprocess 互換の NJD アクセント後段
+- **モデル非依存**: 読み・モーラ・音素・モーラ毎のトーンを中立に出力。モデル固有の音素/トーン梱包は
+  呼び出し側で組む
+- **辞書キャッシュ**: `@hdae/yomi/browser` が Cache API に辞書をキャッシュし、magic + CRC で整合性検証
+  （破損は fail loud、破損キャッシュは真実源から取り直す self-heal）
 
-```bash
+## インストール
+
+```sh
 deno add jsr:@hdae/yomi
 ```
 
-## Quick Start
+## クイックスタート
 
 ```typescript
 import { analyze, JtdDictionary } from "@hdae/yomi";
 import { loadDictionary } from "@hdae/yomi/browser";
 
-// Fetch the dictionary for this package version (cached in the Cache API,
-// integrity-verified).
+// このパッケージ版に対応する辞書を取得（Cache API にキャッシュ・整合性検証つき）。
 const bytes = await loadDictionary();
 const dict = JtdDictionary.load(bytes.buffer);
 
-// Text -> reading + accent + phrase boundaries.
+// テキスト → 読み + アクセント + 句境界。
 const result = analyze(dict, "こんにちは、今日はいい天気ですね。");
 for (const phrase of result.accentPhrases) {
   console.log(
     phrase.moras.map((m) => m.kana).join(""),
-    "nucleus:",
+    "核:",
     phrase.accentNucleus,
     phrase.pauseAfter,
   );
 }
 ```
 
-## Usage
+## 使い方
 
-### Deno / server (local dictionary file)
+### Deno / サーバ（ローカルの辞書ファイルを使う）
 
 ```typescript
 import { analyze, JtdDictionary } from "@hdae/yomi";
@@ -57,65 +56,56 @@ const dict = JtdDictionary.load((await Deno.readFile("naist-jdic.jtd")).buffer);
 console.log(analyze(dict, "音声合成のテストを行います。"));
 ```
 
-### Model adapters
+### モデルアダプタ
 
-`@hdae/yomi` is model-neutral. It emits readings, moras, phonemes
-(`moraToPhones`), per-mora tones (`moraTones`), word/phone alignment
-(`wordPhoneAlignment`), and pause punctuation (`pausePunct`). Assemble a specific
-model's phone/tone format (PAD tokens, tone conventions, and so on) at your call
-site from these pieces.
+`@hdae/yomi` はモデル非依存です。読み・モーラ・音素（`moraToPhones`）・モーラ毎のトーン
+（`moraTones`）・語/音素アライメント（`wordPhoneAlignment`）・ポーズ記号（`pausePunct`）を出力するので、
+特定モデルの音素/トーン形式（PAD トークン・トーン規約など）は、これらを組み合わせて呼び出し側で構築します。
 
-## Dictionary distribution & caching
+### JTD1 コーデック（辞書ツール向け）
 
-The dictionary `naist-jdic.jtd` (a JTD1 binary) is **not bundled** in the
-package. It is distributed as a versioned release asset and fetched at runtime.
+辞書のビルド・検査を行うツールは、低レベルの JTD1 コーデック層を `@hdae/yomi/format` から利用できます
+（レイアウト定数・`JtdContainer`・`crc32` など）。G2P を使うだけなら不要です。
 
-`loadDictionary` from `@hdae/yomi/browser` stores the dictionary in the **Cache
-API** and verifies the fetched bytes against the JTD1 magic and per-section CRC
-(corruption throws — fail loud). A corrupted cache entry is re-fetched from the
-source (self-heal).
+## 辞書の配布とキャッシュ
 
-By default it fetches **the dictionary matching this package's own version** (the
-version is baked into the code, so code and dictionary always agree —
-reproducible). Because a pinned version is immutable, later calls are served from
-the cache with no network access.
+辞書 `naist-jdic.jtd`（JTD1 バイナリ）はパッケージに同梱せず、versioned なリリースアセットとして実行時に
+取得します。`@hdae/yomi/browser` の `loadDictionary` は辞書を **Cache API** に保存し、取得したバイト列を
+JTD1 の magic とセクション CRC で整合性検証します（破損は throw＝fail loud）。破損キャッシュは真実源
+（network）から取り直します（self-heal）。
+
+既定では、このパッケージ自身の版に対応する辞書を取得します（版をコードに焼き込み済み＝コードと辞書の版が
+常に一致し再現性が保たれる）。版固定＝不変なので、次回以降はネットワークなしでキャッシュから返します。
 
 ```typescript
-// Default: the dictionary for this package version (recommended).
+// 既定: 自身の版の辞書（推奨）
 const bytes = await loadDictionary();
 
-// Or pin a version / point at a mirror or self-hosted copy explicitly.
+// 明示的に版や取得元を指定する場合（mirror / 自ホスト等）
 const other = await loadDictionary({
-  version: "0.1.0", // default = this package's own version
-  url: "https://example.com/naist-jdic-{version}.jtd", // {version} is substituted at fetch time
+  version: "0.1.0", // 既定 = パッケージ自身の版
+  url: "https://example.com/naist-jdic-{version}.jtd", // {version} は取得時に置換
 });
 ```
 
-## License
+## ライセンス
 
-- **Code: MIT** (`LICENSE`).
-- **Dictionary data (naist-jdic): BSD-3-Clause** (`NOTICE`; the full COPYING text
-  is embedded in the JTD1 META section).
+- **コード: MIT**（`LICENSE`）。
+- **辞書データ (naist-jdic): BSD-3-Clause**（`NOTICE`。COPYING 全文は JTD1 の META セクションに埋め込み済み）。
 
-## Acknowledgements
+## 謝辞 / Acknowledgements
 
-This project stands on prior research and data for Japanese speech synthesis,
-with gratitude:
+本プロジェクトは、日本語音声合成のための先行研究・データに深く依存しています。感謝します。
 
-- **[Open JTalk](https://open-jtalk.sourceforge.net/)** — Japanese TTS frontend;
-  the origin of this implementation's accent handling (the NJD accent-combination
-  rules and more).
-- **naist-jdic** — the Japanese dictionary data used by this package (BSD-3-Clause,
-  Nara Institute of Science and Technology and others). Redistribution carries the
-  BSD-3-Clause attribution (`NOTICE`).
-- **[jpreprocess](https://github.com/jpreprocess/jpreprocess)** — a Rust
-  implementation of the OpenJTalk NJD post-stage; the primary reference for
-  porting and verifying readings and accent.
-- **[Lindera](https://github.com/lindera/lindera)** — the morphological analyzer
-  referenced when reimplementing compatible tokenization (lattice, unknown-word
-  generation, connection costs).
-- **[MeCab](https://taku910.github.io/mecab/)** — the foundation of morphological
-  analysis (the naist-jdic format and more).
+- **[Open JTalk](https://open-jtalk.sourceforge.net/)** — 日本語 TTS フロントエンド（NJD のアクセント
+  結合規則など、本実装のアクセント処理の源流）。
+- **naist-jdic** — 本パッケージが用いる日本語辞書データ（BSD-3-Clause, Nara Institute of Science and
+  Technology ほか）。再配布時は BSD-3-Clause の帰属表示を伴います（`NOTICE`）。
+- **[jpreprocess](https://github.com/jpreprocess/jpreprocess)** — OpenJTalk 後段（NJD）の Rust 実装。
+  読み・アクセントの移植と検証で主に参照しました。
+- **[Lindera](https://github.com/lindera/lindera)** — 形態素解析器。分かち書き（ラティス・未知語生成・
+  連接コスト）を互換実装する際に参照しました。
+- **[MeCab](https://taku910.github.io/mecab/)** — 形態素解析の基盤（naist-jdic のフォーマット等）。
 - **[pyopenjtalk](https://github.com/r9y9/pyopenjtalk) /
-  [pyopenjtalk-plus](https://github.com/tsukumijima/pyopenjtalk-plus)** — used to
-  build the golden data for quality verification.
+  [pyopenjtalk-plus](https://github.com/tsukumijima/pyopenjtalk-plus)** — 品質検証用のゴールデンデータ
+  作成に使用。
