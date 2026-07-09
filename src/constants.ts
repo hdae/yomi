@@ -12,7 +12,8 @@ export const VERSION = "0.2.0";
  * 既定辞書の HF リビジョン（辞書リポ `hdae/yomi-dict` のコミット SHA）。
  * 辞書はパッケージ版と独立に更新されるため、パッケージ版ではなくこのコミットで固定する
  * （`resolve/{revision}/…` は immutable・reproducible）。辞書を差し替えたら HF へ上げ直してこの SHA を更新する。
- * 40桁 hex の SHA を指定すると getDictionary はキャッシュする（不変）。`"main"` 等の可変 ref は毎回最新を取得する。
+ * 40桁 hex の SHA はそのまま取得・キャッシュする（不変）。`"main"` 等の可変 ref は既定ホストでは
+ * `DICT_REVISION_API` で現在の SHA に解決してから取得するので、変わらなければキャッシュから返る（再 DL 回避）。
  * DECIDED: 版依存をやめ辞書リポのコミットで固定する（docs/decisions/0003）。
  */
 export const DICT_REVISION = "ab847217c833593c3aec9875b9bfa6ff9789dc29";
