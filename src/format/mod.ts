@@ -8,8 +8,8 @@
  * @module
  */
 
-export { BitVector, BitWriter, popcount32 } from "../bits.ts";
-export { LoudsTrie, type PrefixHit } from "../louds.ts";
+export { BitVector, BitWriter, popcount32 } from "./bits.ts";
+export { LoudsTrie } from "./louds.ts";
 export {
   CONTEXT_ID_DIMENSION,
   ENCODING_NAIVE,
@@ -20,24 +20,28 @@ export {
   SECTION_ALIGN,
   SECTION_ENTRY_BYTES,
   SECTION_NAMES,
-  type SectionName,
 } from "./constants.ts";
-export { JtdContainer, type SectionView } from "./reader.ts";
+export { JtdContainer } from "./reader.ts";
 export { crc32, crc32Hex } from "./crc32.ts";
 export {
-  type ArrayField,
   CHAR_LAYOUT,
   computeLayout,
   CONN_LAYOUT,
-  type DecodedSection,
   decodeSection,
   FIELD_BYTES,
-  type FieldPlacement,
-  type FieldType,
-  type LayoutPlan,
   LEXI_LAYOUT,
   READ_LAYOUT,
-  type SectionLayout,
   TRIE_LAYOUT,
   UNKD_LAYOUT,
 } from "./layout.ts";
+export type {
+  ArrayField,
+  DecodedSection,
+  FieldPlacement,
+  FieldType,
+  LayoutPlan,
+  PrefixHit,
+  SectionLayout,
+  SectionName,
+  SectionView,
+} from "./types.ts";

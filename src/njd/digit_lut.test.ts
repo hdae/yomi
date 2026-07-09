@@ -9,7 +9,7 @@
 
 import { njdSetDigit } from "./digit.ts";
 import { makeRuleNode } from "./rule_node.ts";
-import type { NjdNode } from "./node.ts";
+import type { NjdNode } from "./types.ts";
 import {
   CLASS1_CONVERSION,
   CLASS2_CONVERSION,

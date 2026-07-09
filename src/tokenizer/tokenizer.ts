@@ -3,38 +3,11 @@
 // 複合語エントリ（複数ユニット）は jpreprocess の WordEntry::Multiple と同様に
 // ユニットごとの別トークンへ展開する（golden の NJD ノード単位と1:1になる）。
 
-import type { JtdDictionary } from "./dictionary.ts";
-import type { OverlayDictionary } from "./overlay.ts";
+import type { JtdDictionary } from "../dict/dictionary.ts";
+import type { OverlayDictionary } from "../dict/overlay.ts";
+import type { Token } from "./types.ts";
 import { tokenizeToNodes } from "./lattice.ts";
-import { normalizeForDict, splitFragments } from "./normalize.ts";
-
-/** tokenize が返す1トークン。表層・範囲・品詞・発音・アクセント情報を持つ。 */
-export type Token = {
-  /** 表層形（正規化後テキストの部分文字列）。 */
-  surface: string;
-  /** 入力テキスト上の範囲（UTF-16 index）。 */
-  start: number;
-  /** 範囲の終端（exclusive、UTF-16 index）。 */
-  end: number;
-  /** [品詞, 細分類1, 細分類2, 細分類3, 活用型, 活用形] */
-  pos: readonly string[];
-  /** 発音形（カタカナ、無声化マーク ’ 除去済み）。未知語は undefined。 */
-  pron?: string;
-  /** 生の発音列（’ 含む）。NJD 後段のモーラ化が使う。未知語は undefined。 */
-  pronRaw?: string;
-  /** 語アクセント型。情報なしは undefined。 */
-  accType?: number;
-  /** アクセント結合規則。なしは undefined。 */
-  chainRule?: string;
-  /**
-   * 辞書由来のアクセント句連結フラグ。複合語エントリの2ユニット目以降は false
-   * （各ユニットが独立アクセント句。jpreprocess extend_splited と同一）。
-   * undefined = 未設定（njd_set_accent_phrase が決める）。
-   */
-  chainFlag?: boolean;
-  /** 未知語（本辞書に一致せず unk.def テンプレートから生成された）かどうか。 */
-  isUnknown: boolean;
-};
+import { normalizeForDict, splitFragments } from "../text/normalize.ts";
 
 const NO_ACCENT = 255;
 

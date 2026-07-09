@@ -7,7 +7,7 @@
 // tri-state: undefined=未定, true=有声確定, false=無声確定（Rust の Option<bool>）。
 
 import { isDoushi, isFiller, isJodoushi, isJoshi } from "./pos.ts";
-import type { NjdMora, NjdNode } from "./node.ts";
+import type { NjdMora, NjdNode } from "./types.ts";
 
 type MoraState = {
   mora: NjdMora;

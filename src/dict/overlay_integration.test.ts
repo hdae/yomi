@@ -1,9 +1,9 @@
 // 修正辞書オーバーレイの統合テスト（実辞書使用。辞書が無い環境では skip。src/_dict_path.ts）。
 
 import { JtdDictionary } from "./dictionary.ts";
-import { analyze } from "./analyze.ts";
+import { analyze } from "../analyze.ts";
 import { loadOverlay, OverlayDictionary } from "./overlay.ts";
-import { dictAvailable, dictPath } from "./_dict_path.ts";
+import { dictAvailable, dictPath } from "../_dict_path.ts";
 
 const dictExists = dictAvailable();
 

@@ -21,10 +21,11 @@ import {
   SEMIVOICED_MORA,
   VOICED_MORA,
 } from "./digit_lut.ts";
-import { makeMoras, type NjdNode } from "./node.ts";
+import { makeMoras } from "./node.ts";
+import type { NjdNode } from "./types.ts";
 import { isKazu, isKigou } from "./pos.ts";
 import { makeRuleNode, resetNode, setPron } from "./rule_node.ts";
-import { splitMorasWithRanges } from "../mora_table.ts";
+import { splitMorasWithRanges } from "../text/mora_table.ts";
 
 const isPeriod = (s: string) => s === "．" || s === "・";
 const isFukushiKanou = (n: NjdNode) => n.pos[0] === "名詞" && n.pos[1] === "副詞可能";

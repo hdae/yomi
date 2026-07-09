@@ -6,6 +6,10 @@
  * （docs/decisions/0001）。JTD1 辞書の低レベルコーデックは `@hdae/yomi/format`、
  * ブラウザ辞書ローダは `@hdae/yomi/browser` に分離してある。
  *
+ * 細粒度の言語モデル（NJD ノード・トークナイザ・辞書・モーラ表など）は、
+ * リファレンス実装（jpreprocess / pyopenjtalk）に倣ってドメイン別サブパス
+ * （`@hdae/yomi/njd` `/tokenizer` `/dict` `/text` `/g2p`）に公開する。
+ *
  * 実行時依存ゼロ（MUST）。ブラウザ / Node / Deno / Workers で同一動作。
  *
  * @module
@@ -15,15 +19,16 @@
 // （手書きコピーは deno task bump で同期されず drift する。scripts/version_sync.test.ts が公開 VERSION を検証）。
 export { VERSION } from "./constants.ts";
 
-export { type CharCategoryInfo, type DictMeta, JtdDictionary } from "./dictionary.ts";
+export { JtdDictionary } from "./dict/dictionary.ts";
+export { loadOverlay, OverlayDictionary } from "./dict/overlay.ts";
+export type {
+  CharCategoryInfo,
+  DictMeta,
+  OverlayEntry,
+  ResolvedOverlayEntry,
+} from "./dict/types.ts";
 export { analyze } from "./analyze.ts";
-export {
-  loadOverlay,
-  OverlayDictionary,
-  type OverlayEntry,
-  type ResolvedOverlayEntry,
-} from "./overlay.ts";
-export { type AccentPhrase, type FrontendResult, type Mora } from "./njd/result.ts";
-export { moraToPhones } from "./phonemes.ts";
-export { moraTones } from "./tones.ts";
-export { pausePunct } from "./word_alignment.ts";
+export { moraToPhones } from "./g2p/phonemes.ts";
+export { moraTones } from "./g2p/tones.ts";
+export { pausePunct } from "./g2p/word_alignment.ts";
+export type { AccentPhrase, FrontendResult, Mora } from "./g2p/types.ts";

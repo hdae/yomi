@@ -10,9 +10,10 @@
 
 import { pausePunct, wordPhoneAlignment } from "./word_alignment.ts";
 import { moraToPhones } from "./phonemes.ts";
-import { JtdDictionary } from "./dictionary.ts";
-import { analyze, analyzeToNodes } from "./analyze.ts";
-import { dictAvailable, dictPath } from "./_dict_path.ts";
+import { JtdDictionary } from "../dict/dictionary.ts";
+import { analyze } from "../analyze.ts";
+import { analyzeToNodes } from "../njd/frontend.ts";
+import { dictAvailable, dictPath } from "../_dict_path.ts";
 
 const assert = (cond: boolean, msg: string) => {
   if (!cond) throw new Error(msg);

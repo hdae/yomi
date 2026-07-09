@@ -3,7 +3,8 @@
 // 文脈スコアで判別し、桁読みなら 十/百/千/万… のノードを挿入して表層を書き換える。
 
 import { DIGIT_NORMALIZE, NUMERAL_LIST2, NUMERAL_LIST3, UNKNOWN_DICT_DIGITS } from "./digit_lut.ts";
-import { isTouten, type NjdNode } from "./node.ts";
+import { isTouten } from "./node.ts";
+import type { NjdNode } from "./types.ts";
 import { isKazu } from "./pos.ts";
 import { makeRuleNode, resetNode, setPron } from "./rule_node.ts";
 

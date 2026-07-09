@@ -3,9 +3,9 @@
 // ここは「ビューの組み立て」だけを行う。検索・ラティスはそれぞれ louds.ts /
 // lattice.ts の責務（1モジュール1責務）。
 
-import { BitVector } from "./bits.ts";
-import { LoudsTrie } from "./louds.ts";
-import { JtdContainer } from "./format/reader.ts";
+import { BitVector } from "../format/bits.ts";
+import { LoudsTrie } from "../format/louds.ts";
+import { JtdContainer } from "../format/reader.ts";
 import {
   CHAR_LAYOUT,
   CONN_LAYOUT,
@@ -14,44 +14,9 @@ import {
   READ_LAYOUT,
   TRIE_LAYOUT,
   UNKD_LAYOUT,
-} from "./format/layout.ts";
-import { crc32Hex } from "./format/crc32.ts";
-
-/** JTD1 辞書のメタデータ（META セクションを JSON デコードしたもの）。 */
-export type DictMeta = {
-  /** 辞書名。 */
-  dictName: string;
-  /** 辞書のビルド元（リポジトリ・タグ）。 */
-  source: { repo: string; tag: string };
-  /** 辞書をビルドした dict-builder のバージョン。 */
-  builderVersion: string;
-  /** ビルド日時。 */
-  buildDate: string;
-  /** 各種要素数の集計（surfaceCount 等）。 */
-  counts: Record<string, number>;
-  /** posId → [品詞, 細分類1, 細分類2, 細分類3, 活用型, 活用形] */
-  posTable: string[][];
-  /** chainRuleId → 結合規則文字列（"*" = なし） */
-  chainRuleTable: string[];
-  /** 文字カテゴリ名の一覧（CHAR セクションの catTable と対応する順序）。 */
-  charCategories: string[];
-  /** セクション名 → CRC32 チェックサム（16進）。load() の破損検証に使う。 */
-  checksums: Record<string, string>;
-  /** 辞書データのライセンス表記。 */
-  license: string;
-};
-
-/** 文字カテゴリ1件の定義（char.def 準拠）。 */
-export type CharCategoryInfo = {
-  /** カテゴリ名。 */
-  name: string;
-  /** true なら既知語があっても常に未知語処理を起動する。 */
-  invoke: boolean;
-  /** true なら同カテゴリの連続文字を1語にまとめる候補を出す。 */
-  group: boolean;
-  /** 生成する未知語候補の文字数（0 = 生成しない）。 */
-  length: number;
-};
+} from "../format/layout.ts";
+import { crc32Hex } from "../format/crc32.ts";
+import type { CharCategoryInfo, DictMeta } from "./types.ts";
 
 /** JTD1 コンテナから読み込んだランタイム辞書オブジェクト（全列ゼロコピー参照）。 */
 export class JtdDictionary {

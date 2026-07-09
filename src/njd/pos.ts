@@ -3,8 +3,7 @@
 // [品詞, 細分類1, 細分類2, 細分類3, 活用型, 活用形] を直接述語で判定する
 // （enum 移植より対応表が1段減り、辞書との乖離が構造的に起きない）。
 
-/** 辞書の品詞素性 [品詞, 細分類1, 細分類2, 細分類3, 活用型, 活用形] を表す文字列配列。 */
-export type PosFeatures = string[];
+import type { PosFeatures } from "./types.ts";
 
 export const isMeishi = (p: PosFeatures): boolean => p[0] === "名詞";
 export const isDoushi = (p: PosFeatures): boolean => p[0] === "動詞";

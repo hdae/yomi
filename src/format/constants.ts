@@ -33,8 +33,7 @@ export const SECTION_NAMES = [
   "CHAR",
   "UNKD",
 ] as const;
-/** SECTION_NAMES の要素型（有効なセクション名のユニオン）。 */
-export type SectionName = (typeof SECTION_NAMES)[number];
+// SectionName 型は types.ts（値・実装から型を分離）。
 
 /** encoding ID。0 = v1 素朴エンコード。代替エンコーダを足すときに増える。 */
 export const ENCODING_NAIVE = 0;

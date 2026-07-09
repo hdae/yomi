@@ -2,41 +2,8 @@
 // jpreprocess の NJDNode 相当。tokenizer の Token は不変だが、NJD 後段は
 // ノードの分割・併合・品詞書き換えを行うため可変構造にする。
 
-import type { MoraSpec } from "../mora_table.ts";
-import type { ChainRules } from "./chain_rules.ts";
-import type { PosFeatures } from "./pos.ts";
-
-/** モーラ1個分の NJD 表現（音韻情報 + 無声化フラグ）。 */
-export type NjdMora = {
-  /** モーラの音韻情報（カナ・子音・母音・擬似モーラ種別）。 */
-  spec: MoraSpec;
-  /** 母音無声化。dict の ’ 由来は最初から false。njd_set_unvoiced_vowel が確定する。 */
-  voiced: boolean;
-};
-
-/** NJD ノード。トークンを起点に品詞・モーラ・アクセントを可変に保持する後処理単位。 */
-export type NjdNode = {
-  /** 表層文字列（正規化後）。 */
-  surface: string;
-  /** 可変の品詞素性（convert_to_kigou が書き換える）。 */
-  pos: PosFeatures;
-  /** 擬似モーラ（読点・？等）を含むモーラ列。 */
-  moras: NjdMora[];
-  /**
-   * ノード生成時点の発音カナ（不変）。Rust の read 欄の代用。
-   * class3 照合（digit.ts）が使う — 現在の発音は class2 の連濁で変異するため、
-   * 変異前の値をキーにしないと Rust（readキー）と挙動がずれる。
-   */
-  pronOrig: string;
-  /** アクセント核位置（語単位 → njd_set_accent_type が句先頭ノードを更新）。 */
-  accent: number;
-  /** この語のアクセント結合規則（辞書の chain_rule 欄をパースしたもの）。null は規則なし。 */
-  chainRule: ChainRules | null;
-  /** undefined = 未設定(-1)。njd_set_accent_phrase が確定する。 */
-  chainFlag: boolean | undefined;
-  /** 未知語由来のノードか。 */
-  isUnknown: boolean;
-};
+import type { MoraSpec } from "../text/types.ts";
+import type { NjdMora, NjdNode } from "./types.ts";
 
 /** 実モーラ数（擬似モーラ Touten/Question を除く。Pronunciation::mora_size 相当）。 */
 export const moraSize = (node: NjdNode): number => {

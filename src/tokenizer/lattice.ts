@@ -11,28 +11,9 @@
 // - コスト: conn(左エッジ.rightId, 注目エッジ.leftId) + 語コスト。同点は先に追加された
 //   エッジが勝つ（厳密 < 比較）。BOS/EOS の文脈 ID = 0
 
-import type { JtdDictionary } from "./dictionary.ts";
-import type { OverlayDictionary } from "./overlay.ts";
-
-/** ラティスの1エッジ（表層区間 [start,end) と、由来・連接コスト情報）。 */
-export type LatticeNode = {
-  /** 表層の開始位置（UTF-16）。 */
-  start: number;
-  /** 表層の終了位置（UTF-16、排他）。 */
-  end: number;
-  /** LEXI エントリ index。未知語は -1。 */
-  entryIdx: number;
-  /** UNKD レコード index。既知語は -1。 */
-  unkIdx: number;
-  /** 修正辞書エントリ index。オーバーレイ由来のみ >=0。 */
-  overlayIdx: number;
-  /** 左文脈 ID（連接コスト行列の行）。 */
-  leftId: number;
-  /** 右文脈 ID（連接コスト行列の列）。 */
-  rightId: number;
-  /** 語コスト。 */
-  wordCost: number;
-};
+import type { JtdDictionary } from "../dict/dictionary.ts";
+import type { OverlayDictionary } from "../dict/overlay.ts";
+import type { LatticeNode } from "./types.ts";
 
 /** サロゲートペア先頭なら 2、それ以外 1（コードポイント単位の歩幅）。 */
 const charLen = (text: string, p: number): number => {

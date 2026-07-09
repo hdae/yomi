@@ -11,8 +11,8 @@
 // NOTE: "q"(促音) は表記系の一慣習、"N"(撥音) は広く共通。モデル固有の梱包
 //       （PAD・トーン規約）は yomi では持たない（docs/decisions/0001）。
 
-import type { Mora } from "./njd/result.ts";
-import type { NjdNode } from "./njd/node.ts";
+import type { Mora } from "./types.ts";
+import type { NjdNode } from "../njd/types.ts";
 
 /** モーラ1個を SBV2 音素列に展開する。 */
 export const moraToPhones = (mora: Mora): string[] => {

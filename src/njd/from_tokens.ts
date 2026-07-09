@@ -2,10 +2,11 @@
 // 既知語は辞書の生発音列（’ 含む）をモーラ化し、未知語は空モーラで作る
 // （表層からのモーラ化は njd_set_pronunciation の責務）。
 
-import type { Token } from "../tokenizer.ts";
-import { splitMorasWithRanges } from "../mora_table.ts";
+import type { Token } from "../tokenizer/types.ts";
+import { splitMorasWithRanges } from "../text/mora_table.ts";
 import { parseChainRules } from "./chain_rules.ts";
-import { makeMoras, type NjdNode } from "./node.ts";
+import { makeMoras } from "./node.ts";
+import type { NjdNode } from "./types.ts";
 
 export const nodesFromTokens = (tokens: readonly Token[]): NjdNode[] => {
   const nodes: NjdNode[] = [];

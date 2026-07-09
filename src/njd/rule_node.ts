@@ -2,9 +2,10 @@
 // NjdNode を生成する。Rust 側の定数文字列を改変せずそのまま使うための互換パーサ。
 // 形式: surface,品詞,細1,細2,細3,活用型,活用形,原形,読み,発音,核/モーラ数,結合規則[,chain_flag]
 
-import { splitMorasWithRanges } from "../mora_table.ts";
+import { splitMorasWithRanges } from "../text/mora_table.ts";
 import { parseChainRules } from "./chain_rules.ts";
-import { makeMoras, type NjdNode } from "./node.ts";
+import { makeMoras } from "./node.ts";
+import type { NjdNode } from "./types.ts";
 
 export const makeRuleNode = (line: string): NjdNode => {
   const f = line.split(",");

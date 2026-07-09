@@ -4,7 +4,8 @@
 
 import { getRule } from "./chain_rules.ts";
 import { isKazu } from "./pos.ts";
-import { moraSize, type NjdNode } from "./node.ts";
+import { moraSize } from "./node.ts";
+import type { NjdNode } from "./types.ts";
 
 export const njdSetAccentType = (nodes: NjdNode[]): void => {
   if (nodes.length === 0) return;

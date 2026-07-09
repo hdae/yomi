@@ -12,9 +12,11 @@
 //
 // モデル固有の番兵（PAD 等）は「語」ではないので、ここには含めない（docs/decisions/0001）。
 
-import { moraSize, type NjdNode } from "./njd/node.ts";
-import { symbolPause } from "./njd/result.ts";
+import { moraSize } from "../njd/node.ts";
+import type { NjdNode } from "../njd/types.ts";
+import { symbolPause } from "./result.ts";
 import { moraToPhones, nodeToMoras } from "./phonemes.ts";
+import type { WordPhones } from "./types.ts";
 
 /**
  * pauseAfter を句読点記号へ落とす（中立）。読点由来 short→","、句点由来 long→"."。
@@ -24,14 +26,6 @@ export const pausePunct = (pauseAfter: "none" | "short" | "long"): string | unde
   if (pauseAfter === "short") return ",";
   if (pauseAfter === "long") return ".";
   return undefined;
-};
-
-/** 語アライメントの1要素（1 NJD ノード、または句読点1個）。 */
-export type WordPhones = {
-  /** 語の表層（NJD ノード表層）、または句読点記号（","/"."）。 */
-  surface: string;
-  /** その語が生む SBV2 音素列（両端 "_" は含まない）。 */
-  phones: string[];
 };
 
 /**

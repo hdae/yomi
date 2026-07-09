@@ -16,13 +16,7 @@
 
 import type { BitVector } from "./bits.ts";
 
-/** commonPrefixSearch が1件のヒットごとにコールバックへ渡す情報。 */
-export type PrefixHit = {
-  /** ヒットした表層形の surfaceId。 */
-  surfaceId: number;
-  /** 検索開始位置からではなく、文字列先頭からの終端 index（排他）。 */
-  end: number;
-};
+// PrefixHit 型は types.ts（値・実装から型を分離）。
 
 /** LOUDS 符号化された読み取り専用トライ。表層形から surfaceId を引く。 */
 export class LoudsTrie {

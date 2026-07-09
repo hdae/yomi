@@ -1,9 +1,9 @@
 // 実辞書（naist-jdic.jtd）での統合テスト。
 // 辞書が無い環境では skip される（CI では build-dict を先に走らせる。src/_dict_path.ts）。
 
-import { JtdDictionary } from "./dictionary.ts";
+import { JtdDictionary } from "../dict/dictionary.ts";
 import { tokenize } from "./tokenizer.ts";
-import { dictAvailable, dictPath } from "./_dict_path.ts";
+import { dictAvailable, dictPath } from "../_dict_path.ts";
 
 const dictExists = dictAvailable();
 

@@ -6,8 +6,13 @@
 // セクション = [u32 スカラヘッダ列][型付き配列列]。各配列の先頭は要素サイズ境界に
 // パディングされる。配列長はスカラヘッダから導出する（自己記述）。
 
-/** セクション内のスカラ・配列要素が取り得る型（バイト幅の元）。 */
-export type FieldType = "u32" | "u16" | "i16" | "u8";
+import type {
+  DecodedSection,
+  FieldPlacement,
+  FieldType,
+  LayoutPlan,
+  SectionLayout,
+} from "./types.ts";
 
 /** 各 FieldType のバイト幅（アラインメント・オフセット計算に使う）。 */
 export const FIELD_BYTES: Record<FieldType, number> = {
@@ -15,44 +20,6 @@ export const FIELD_BYTES: Record<FieldType, number> = {
   u16: 2,
   i16: 2,
   u8: 1,
-};
-
-/** セクション内の型付き配列1本の宣言（名前・要素型・要素数の導出方法）。 */
-export type ArrayField = {
-  /** 配列名（DecodedSection.arrays のキーになる）。 */
-  name: string;
-  /** 要素型。 */
-  type: FieldType;
-  /** スカラヘッダ値から要素数を導出する。 */
-  length: (h: Record<string, number>) => number;
-};
-
-/** 1セクションの構造宣言（先頭の u32 スカラヘッダ列 + 後続の型付き配列列）。 */
-export type SectionLayout = {
-  /** u32 スカラの名前列（ペイロード先頭に順に並ぶ）。 */
-  header: readonly string[];
-  /** ヘッダに続く型付き配列列（宣言順にパディングを挟んで配置される）。 */
-  arrays: readonly ArrayField[];
-};
-
-/** computeLayout が確定した、配列1本の実際の配置。 */
-export type FieldPlacement = {
-  /** 配列名。 */
-  name: string;
-  /** 要素型。 */
-  type: FieldType;
-  /** セクションペイロード先頭からのバイトオフセット。 */
-  byteOffset: number;
-  /** 要素数。 */
-  elemCount: number;
-};
-
-/** computeLayout の戻り値: 全配列の配置とセクションペイロードの総バイト長。 */
-export type LayoutPlan = {
-  /** 各配列の配置一覧（layout.arrays と同じ順）。 */
-  fields: FieldPlacement[];
-  /** ヘッダと全配列を含むセクションペイロードの総バイト長。 */
-  totalBytes: number;
 };
 
 /** スカラ値からレイアウト全体の配置を確定する（書き手・読み手の共有経路）。 */
@@ -157,14 +124,6 @@ export const UNKD_LAYOUT: SectionLayout = {
 };
 
 // ---- 読み手側の汎用デコード ----
-
-/** decodeSection の戻り値: ヘッダのスカラ値と、配列のゼロコピービューの組。 */
-export type DecodedSection = {
-  /** ヘッダ由来のスカラ値（名前→値）。 */
-  scalars: Record<string, number>;
-  /** name → ゼロコピー TypedArray ビュー。 */
-  arrays: Record<string, Uint32Array | Uint16Array | Int16Array | Uint8Array>;
-};
 
 /**
  * セクションペイロード（buffer 内の [offset, offset+length)）をレイアウト定義に

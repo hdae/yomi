@@ -8,44 +8,9 @@
 //   変更のたびに作り直して差し替える（可変状態を持たないことで競合を構造的に排除）
 
 import type { JtdDictionary } from "./dictionary.ts";
-import { normalizeForDict } from "./normalize.ts";
-import { splitMorasWithRanges } from "./mora_table.ts";
-
-/** 修正辞書エントリ（JSON で与えるユーザー入力形式）。 */
-export type OverlayEntry = {
-  /** 表層形。正規化済み形（normalizeForDict の不動点）で与えること。 */
-  surface: string;
-  /** 発音カタカナ（長音「ー」、無声化 ’ 可）。 */
-  reading: string;
-  /** アクセント型。0 = 平板。 */
-  accentType: number;
-  /** アクセント結合規則（naist-jdic col15 と同文法）。省略 = "*"。 */
-  accentConnRule?: string;
-  /** 品詞素性（先頭から一致、省略部は "*"）。省略 = 名詞,固有名詞,一般。 */
-  pos?: readonly string[];
-  /** 語コスト。省略 = -10000（本辞書より強い）。 */
-  cost?: number;
-};
-
-/** OverlayEntry を本辞書の文脈IDで解決済みの内部形式（ラティス投入用）。 */
-export type ResolvedOverlayEntry = {
-  /** 表層形。 */
-  surface: string;
-  /** 発音カタカナ。 */
-  reading: string;
-  /** アクセント型。 */
-  accentType: number;
-  /** アクセント結合規則。"*" は規則なし。 */
-  chainRule: string;
-  /** 品詞素性（本辞書 posTable 上の完全形）。 */
-  pos: readonly string[];
-  /** 語コスト。 */
-  cost: number;
-  /** 連接コスト行列における左文脈ID。 */
-  leftId: number;
-  /** 連接コスト行列における右文脈ID。 */
-  rightId: number;
-};
+import type { OverlayEntry, ResolvedOverlayEntry } from "./types.ts";
+import { normalizeForDict } from "../text/normalize.ts";
+import { splitMorasWithRanges } from "../text/mora_table.ts";
 
 const DEFAULT_POS = ["名詞", "固有名詞", "一般"] as const;
 const DEFAULT_COST = -10000;

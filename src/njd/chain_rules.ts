@@ -5,40 +5,7 @@
 // 例: "C3", "形容詞%F2@-1", "動詞%F1/形容詞%F1/名詞%F1"
 // 品詞プレフィクスは「前語の品詞別」にルールを切り替えるためのスロット指定。
 
-import type { PosFeatures } from "./pos.ts";
-
-/** アクセント結合型（jpreprocess AccentType 相当。F/C/P + 数字、または規則なしの "none"）。 */
-export type AccentType =
-  | "F1"
-  | "F2"
-  | "F3"
-  | "F4"
-  | "F5"
-  | "C1"
-  | "C2"
-  | "C3"
-  | "C4"
-  | "C5"
-  | "P1"
-  | "P2"
-  | "P6"
-  | "P14"
-  | "none";
-
-/** 1つの結合規則（結合型 + 加算値）。 */
-export type ChainRule = {
-  accentType: AccentType;
-  addType: number;
-};
-
-/** 前語の品詞スロット別に選べるアクセント結合規則の集合（parseChainRules の戻り値）。 */
-export type ChainRules = {
-  default?: ChainRule;
-  doushi?: ChainRule;
-  joshi?: ChainRule;
-  keiyoushi?: ChainRule;
-  meishi?: ChainRule;
-};
+import type { AccentType, ChainRule, ChainRules, PosFeatures } from "./types.ts";
 
 // 正規表現は accent_rule.rs の PARSE_REGEX と同一。
 // NOTE: 「特殊助動詞」は正規表現にはあるが POSMatch が受理せずスキップされる

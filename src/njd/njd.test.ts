@@ -1,8 +1,8 @@
 // jpreprocess の Rust 単体テストの移植（accent_type.rs / unvoiced_vowel.rs の #[test]）。
 // モーラは手書きリテラルで構成し、mora_table に依存せずコアロジックを検証する。
 
-import type { MoraSpec } from "../mora_table.ts";
-import type { NjdNode } from "./node.ts";
+import type { MoraSpec } from "../text/types.ts";
+import type { NjdNode } from "./types.ts";
 import { njdSetAccentType } from "./accent_type.ts";
 import { njdSetUnvoicedVowel } from "./unvoiced_vowel.ts";
 import { parseChainRules } from "./chain_rules.ts";

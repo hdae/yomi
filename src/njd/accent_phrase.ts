@@ -24,7 +24,7 @@ import {
   isSetsuzokushi,
   isSettoushi,
 } from "./pos.ts";
-import type { NjdNode } from "./node.ts";
+import type { NjdNode } from "./types.ts";
 
 export const njdSetAccentPhrase = (nodes: NjdNode[]): void => {
   for (let i = 1; i < nodes.length; i++) {

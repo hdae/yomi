@@ -12,16 +12,7 @@ import {
   SECTION_ALIGN,
   SECTION_ENTRY_BYTES,
 } from "./constants.ts";
-
-/** JTD1 セクションテーブルの1エントリ（バッファ内の位置とエンコード種別）。 */
-export type SectionView = {
-  /** セクションのエンコーダ ID（0 = v1 素朴）。 */
-  encoding: number;
-  /** buf 先頭からのバイトオフセット（8 の倍数を保証）。 */
-  offset: number;
-  /** パディングを含まない実長（バイト）。 */
-  length: number;
-};
+import type { SectionView } from "./types.ts";
 
 /** JTD1 バイナリを受け取り、ヘッダ検証済みのセクション表を保持する低レベル読み手。 */
 export class JtdContainer {

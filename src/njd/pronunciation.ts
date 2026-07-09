@@ -6,9 +6,11 @@
 // 3. 連続する「1モーラのかなフィラー」を先頭ノードへ併合する（chain kana sequence）
 // 4. 動詞/助動詞 + 助動詞「う」→ 長音ー。助動詞です/ます + 「？」→ 核1に戻す
 
-import { isMoraString, type MoraSpec, splitMorasWithRanges } from "../mora_table.ts";
+import { isMoraString, splitMorasWithRanges } from "../text/mora_table.ts";
+import type { MoraSpec } from "../text/types.ts";
 import { convertToKigou, isDoushi, isFiller, isJodoushi } from "./pos.ts";
-import { makeMoras, moraSize, type NjdNode } from "./node.ts";
+import { makeMoras, moraSize } from "./node.ts";
+import type { NjdNode } from "./types.ts";
 
 export const njdSetPronunciation = (nodes: NjdNode[]): NjdNode[] => {
   // ---- 1. モーラ0ノードの表層かな解析と分割 ----
