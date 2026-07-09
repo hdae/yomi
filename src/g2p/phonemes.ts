@@ -14,7 +14,7 @@
 import type { Mora } from "./types.ts";
 import type { NjdNode } from "../njd/types.ts";
 
-/** モーラ1個を SBV2 音素列に展開する。 */
+/** モーラ1個を TTS 向け音素列に展開する。 */
 export const moraToPhones = (mora: Mora): string[] => {
   if (mora.vowel === "cl") return ["q"];
   if (mora.vowel === "N") return ["N"];
