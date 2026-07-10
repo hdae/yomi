@@ -4,7 +4,11 @@
  * 1モーラの音韻情報。
  * - vowel: 通常モーラは "a" | "i" | "u" | "e" | "o"、撥音は "N"、促音は "cl"、
  *   長音は "long"。擬似モーラは vowel を "" にする。
- * - consonant: 子音なし（母音のみ／撥音／促音／長音の一部区分）は null。
+ * - consonant: 子音音素（例 "ky"）。母音のみのモーラは null。撥音は "N"・促音は
+ *   "cl"・長音は "-" を consonant にも持つ（jpreprocess mora_dict.rs 忠実の内部
+ *   表現で、子音音素ではない）。
+ *   NOTE: VOICEVOX 互換 API 等「撥音・促音 = 子音なし」を期待する消費側は null に
+ *   正規化して使うこと（g2p 層の Mora.consonant は undefined へ正規化済み）。
  * - pseudo: jpreprocess の MoraEnum::Touten / MoraEnum::Question に対応する
  *   擬似モーラ種別。カナ→MoraEnum のテーブル（mora_dict.rs の4表）にはこの
  *   2種は存在せず、parse_mora_str が非マッチ文字区間を動的に Touten 化し、

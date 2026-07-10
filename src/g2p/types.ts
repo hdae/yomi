@@ -7,7 +7,10 @@ import type { NjdNode } from "../njd/types.ts";
 export type Mora = {
   /** カタカナ1モーラ（拗音は1モーラ）。 */
   kana: string;
-  /** 音素（例 "ky"）。母音のみのモーラは undefined。 */
+  /**
+   * 子音音素（例 "ky"）。母音のみ・撥音・促音・長音のモーラは undefined
+   * （撥音・促音は vowel "N"/"cl" が表す。VOICEVOX 系と同じ「子音なし」扱い）。
+   */
   consonant?: string;
   /** "a|i|u|e|o|N|cl" ほか。長音は直前モーラの母音を引き継ぐ。 */
   vowel: string;
