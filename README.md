@@ -58,8 +58,9 @@ console.log(analyze(dict, "音声合成のテストを行います。"));
 ### モデルアダプタ
 
 `@hdae/yomi` はモデル非依存です。読み・モーラ・音素（`moraToPhones`）・モーラ毎のトーン
-（`moraTones`）・語/音素アライメント（`wordPhoneAlignment`）・ポーズ記号（`pausePunct`）を出力するので、
-特定モデルの音素/トーン形式（PAD トークン・トーン規約など）は、これらを組み合わせて呼び出し側で構築します。
+（`moraTones`）・語/音素アライメント（`wordPhoneAlignment`）・アクセント句セグメント
+（`segmentPhrases`）・ポーズ記号（`pausePunct`）を出力するので、特定モデルの音素/トーン形式
+（PAD トークン・トーン規約など）は、これらを組み合わせて呼び出し側で構築します。
 
 ### JTD1 コーデック（辞書ツール向け）
 

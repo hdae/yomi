@@ -66,13 +66,16 @@
   Actions での辞書処理は廃止（`release-dict.yml` 削除）。辞書差し替え時のみ hf CLI で上げ直し `DICT_REVISION` 更新。
 - **リリース**: **v0.2.0 まで JSR 公開済み**（v0.2.0 = 2026-07-09。SBV2削除・`/format`分離・ドメイン別
   サブパス再編＝[0002](docs/decisions/0002-public-api-surface.md)・HF配布/gzip=
-  [0003](docs/decisions/0003-dict-distribution.md) を同梱）。次版は未計画。
+  [0003](docs/decisions/0003-dict-distribution.md) を同梱）。**v0.3.0 準備済み**（レビュー後続一式:
+  golden-3k 回帰配線・型境界バリデータ等の fail-loud 強化・`segmentPhrases` 公開・`/format` 死にコード
+  除去・本家照合6点の決着。タグ `v0.3.0` push → release.yml OIDC → JSR）。
 - **辞書ローダの専用パッケージ化（計画）**: Cache API は Deno でも使えるためサポート対象を広げ、
   辞書の取得・キャッシュを専用パッケージへ切り出す予定。それまで `src/browser` のローダ挙動改修は
   据え置き（[docs/known-issues.md](docs/known-issues.md) 参照）。
-- **その後（任意）**: 辞書のオンディスク再エンコードでさらに軽量化。実測により **LEXI 索引3本の
-  delta+varint 化と rightId 派生化のみ有効**（gzip 配布サイズ ~7.6→~4.9MiB）。CONN 行 dedup（1377 行中
-  1342 行がユニーク）と READ かなパック（gzip 後 0.07MiB しか縮まない）は実測で棄却済み。
+- **その後（任意・要検討維持、v0.3.0 には含めない）**: 辞書のオンディスク再エンコードでさらに軽量化。
+  実測により **LEXI 索引3本の delta+varint 化と rightId 派生化のみ有効**（gzip 配布サイズ
+  ~7.6→~4.9MiB）。CONN 行 dedup（1377 行中 1342 行がユニーク）と READ かなパック（gzip 後 0.07MiB
+  しか縮まない）は実測で棄却済み。
 - **後回し**: 辞書ソースの pyopenjtalk-plus 化（naist-jdic 系統・BSD-3・品質改善＋大規模化）。採用時は
   golden を pyopenjtalk-plus オラクルで再生成する。**辞書差し替え時の再照合義務（MUST）**: ①同点
   タイブレーク方向（yomi は先頭 CSV 行が勝つ。オラクル辞書が jpreprocess-dictionary ビルダ（書込み
