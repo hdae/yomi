@@ -9,7 +9,7 @@
 
 ## ドキュメント索引
 
-- [docs/decisions/](docs/decisions/) — ADR（`0001` = 中立コア方針 / `0002` = 公開APIの面 / `0003` = 辞書配布(HF/gzip) / `0004` = 辞書ソース固定(naist-jdic v0.1.3)）
+- [docs/decisions/](docs/decisions/) — ADR（`0001` = 中立コア方針 / `0002` = 公開APIの面 / `0003` = 辞書配布(HF/gzip) / `0004` = 辞書ソース固定(naist-jdic v0.1.3) / `0005` = 実在記号の公開(punctuations)）
 - [docs/jtd1-format.md](docs/jtd1-format.md) — 辞書バイナリ JTD1 のフォーマット仕様
 - [docs/limitations.md](docs/limitations.md) — 意図的な制約（by-design）/
   [docs/known-issues.md](docs/known-issues.md) — 未解決の既知問題
@@ -68,7 +68,11 @@
   バリデータ等の fail-loud 強化・`segmentPhrases` 公開・`/format` 死にコード除去・本家照合6点の決着。
   v0.2.0 = 2026-07-09。SBV2削除・`/format`分離・ドメイン別サブパス再編＝
   [0002](docs/decisions/0002-public-api-surface.md)・HF配布/gzip=
-  [0003](docs/decisions/0003-dict-distribution.md)）。次版は未計画。
+  [0003](docs/decisions/0003-dict-distribution.md)）。
+  **v0.4.0 準備済み（タグ/公開待ち）**: light-sbv2 のフィードバック対応 — 実在記号の公開
+  （`punctuations` / `leadingPunctuations`＝[0005](docs/decisions/0005-punctuation-exposure.md)、
+  `wordPhoneAlignment` 実記号化・`pausePunct` 削除）・ン/ッ の `Mora.consonant` undefined 正規化・
+  モーラ表 ヵ 追加（limitations 記載の意図的オラクル逸脱）。
 - **辞書ローダの専用パッケージ化（計画）**: Cache API は Deno でも使えるためサポート対象を広げ、
   辞書の取得・キャッシュを専用パッケージへ切り出す予定。それまで `src/browser` のローダ挙動改修は
   据え置き（[docs/known-issues.md](docs/known-issues.md) 参照）。
