@@ -13,7 +13,7 @@
     "./njd": "./src/njd/mod.ts",
     "./g2p": "./src/g2p/mod.ts",
     "./format": "./src/format/mod.ts",
-    "./browser": "./src/browser/mod.ts"
+    "./loader": "./src/loader/mod.ts"
   },
   "tasks": {
     "check": "deno fmt --check && deno lint && deno check . && deno test --allow-read --allow-env",
@@ -30,6 +30,8 @@
     "bump": "deno run --allow-read --allow-run=deno,git --allow-write=src/constants.ts --no-lock scripts/bump.ts"
   },
   "imports": {
+    // ./loader の実行時依存（同一オーナー・それ自体ゼロ依存。コアは import しない＝docs/decisions/0006）。
+    "@hdae/fetch-cache": "jsr:@hdae/fetch-cache@^0.1.0",
     "@hdae/yomi": "./src/mod.ts",
     // dev/CI 用（scripts/ の deno.jsonc 解析）。配布パッケージ src/ は import しない＝実行時依存ゼロは不変。
     "@std/jsonc": "jsr:@std/jsonc@^1.0.2"

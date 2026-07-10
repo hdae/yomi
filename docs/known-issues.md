@@ -3,16 +3,19 @@
 open な問題・作業待ちの項目。意図的な制約は [limitations.md](limitations.md) へ。
 出典の詳細は `.claude/reviews/2026-07-10_f641bcd/`（初回全域レビュー）の findings を参照。
 
-## ブラウザ辞書ローダ（専用パッケージ化予定のため据え置き）
+## 辞書ローダ（`./loader`、fetch-cache 委譲後の残件）
 
-辞書の取得・キャッシュは Deno でも Cache API が使えることが分かったため、後日専用パッケージへ
-切り出す計画。それまで以下は意図的に手を入れない:
+取得・キャッシュのオーケストレーションは `@hdae/fetch-cache` へ委譲済み
+（[decisions/0006](decisions/0006-loader-on-fetch-cache.md)）。W-E-5（cache 書込み失敗が取得成功後でも
+全体を throw）は fetch-cache の network 縮退＋`onCacheError` 通知で解消し、cache I/O まわり
+（quota / open / put 失敗・`caches` 不在）のテスト責務も fetch-cache 側に移った。残るのは:
 
-- cache 書込み失敗（quota / private mode）が、辞書の取得・検証成功後でも `getDictionary` 全体を
-  throw させる（W-E-5。JSDoc の「非対応環境は fetch のみ」という記述とも乖離）。
 - 可変 ref（`"main"`）の SHA 解決がオフライン/HF 障害で失敗すると、有効な SHA 固定キャッシュが
-  あっても throw する（W-E-6。last-known-SHA フォールバック無し）。
-- `caches` 未定義経路・resolve 失敗・put 失敗・並行呼び出しのテストが無い（W-E-7）。
+  あっても throw する（W-E-6。last-known-SHA フォールバック無し。`resolveHfRevision` も失敗時
+  throw なので fetch-cache 委譲では解消しない）。
+- 並行呼び出し（同時 `getDictionary`）の重複 DL 抑止・テストが無い（W-E-7 残件）。
+- 二重解凍（validate で1回＋戻り値でもう1回）。fetch-cache への decode フック提案が入り次第
+  一本化する（[src/loader/mod.ts](../src/loader/mod.ts) の NOTE）。
 
 ## 解決済みの照合（記録）
 

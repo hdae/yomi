@@ -9,7 +9,7 @@
 
 ## ドキュメント索引
 
-- [docs/decisions/](docs/decisions/) — ADR（`0001` = 中立コア方針 / `0002` = 公開APIの面 / `0003` = 辞書配布(HF/gzip) / `0004` = 辞書ソース固定(naist-jdic v0.1.3) / `0005` = 実在記号の公開(punctuations)）
+- [docs/decisions/](docs/decisions/) — ADR（`0001` = 中立コア方針 / `0002` = 公開APIの面 / `0003` = 辞書配布(HF/gzip) / `0004` = 辞書ソース固定(naist-jdic v0.1.3) / `0005` = 実在記号の公開(punctuations) / `0006` = ローダの fetch-cache 委譲）
 - [docs/jtd1-format.md](docs/jtd1-format.md) — 辞書バイナリ JTD1 のフォーマット仕様
 - [docs/limitations.md](docs/limitations.md) — 意図的な制約（by-design）/
   [docs/known-issues.md](docs/known-issues.md) — 未解決の既知問題
@@ -18,13 +18,15 @@
 
 ## レイアウト
 
-- `src/` — 純 TS フロントエンド。**実行時依存ゼロを MUST で維持**。処理の管轄ごとにディレクトリを切り、
+- `src/` — 純 TS フロントエンド。**コアは実行時依存ゼロを MUST で維持**（例外は `./loader` のみ＝
+  [0006](docs/decisions/0006-loader-on-fetch-cache.md)）。処理の管轄ごとにディレクトリを切り、
   各ディレクトリの `mod.ts` がバレル＝JSR サブパス entrypoint（型は各ドメインの `types.ts` に分離）:
   - `.`（`src/mod.ts`）— モデル非依存 G2P の薄いファサード（高頻度パスのみ再export）
   - `./text`（正規化・モーラ表）/ `./dict`（ランタイム辞書・overlay）/ `./tokenizer`（ラティス分かち書き）
     / `./njd`（NJD ノード・品詞・処理段。`analyzeToNodes`=run_frontend 相当）/ `./g2p`（中立 G2P 出力・建材）
   - `./format`（`src/format/mod.ts`）— JTD1 コーデック層（読み手/書き手が共有。辞書ツール向け）
-  - `./browser`（`src/browser/mod.ts`）— ブラウザ辞書ローダ（Cache API・CRC 検証）
+  - `./loader`（`src/loader/mod.ts`）— 辞書ローダ（gzip 解凍・CRC 検証。取得・キャッシュは同一
+    オーナーのゼロ依存 `@hdae/fetch-cache` に委譲＝[0006](docs/decisions/0006-loader-on-fetch-cache.md)）
   - 依存は一方向: `format,text → dict → tokenizer → njd → g2p → analyze`（back-edge なし）
 - `dict-builder/` — naist-jdic CSV → JTD1 バイナリの書き手（Deno、開発/CI 時のみ・JSR 非公開）。
   `@hdae/yomi/format` を import する。
@@ -47,7 +49,9 @@
   `analyzeWithWords` / `analyzeToNodes` / `JtdDictionary` / 出力型 / overlay / 中立建材）＋ 細粒度の言語モデルを
   ドメイン別サブパス（`./text` `./dict` `./tokenizer` `./njd` `./g2p`）で公開する。型は各ドメイン `types.ts` に分離。
   digit LUT 等の実装詳細は非公開。中立リクエストは実装＋export（[docs/decisions/0001](docs/decisions/0001-neutral-core-no-model-adapters.md)）。
-- **実行時依存ゼロ（MUST）**は配布パッケージ `src/` に限定。`scripts/`・`dict-builder/` は dev/CI 用で対象外。
+- **実行時依存ゼロ（MUST）**は配布パッケージ `src/` のコアに限定。`./loader` のみ同一オーナーの
+  ゼロ依存 `@hdae/fetch-cache` に依存可（第三者依存は不可＝[0006](docs/decisions/0006-loader-on-fetch-cache.md)）。
+  `scripts/`・`dict-builder/` は dev/CI 用で対象外。
 - 辞書CSVの列参照は必ず名前付き定数経由（col13=発音 と col12=読み の取り違えが最悪の事故。TTS が
   使うのは col13 発音形）。col14=アクセント型 / col15=結合規則。matrix.def / 文脈IDは 0..1376 の
   1377次元（0=BOS/EOS。オフバイワン注意）。
@@ -72,10 +76,12 @@
   **v0.4.0 準備済み（タグ/公開待ち）**: light-sbv2 のフィードバック対応 — 実在記号の公開
   （`punctuations` / `leadingPunctuations`＝[0005](docs/decisions/0005-punctuation-exposure.md)、
   `wordPhoneAlignment` 実記号化・`pausePunct` 削除）・ン/ッ の `Mora.consonant` undefined 正規化・
-  モーラ表 ヵ 追加（limitations 記載の意図的オラクル逸脱）。
-- **辞書ローダの専用パッケージ化（計画）**: Cache API は Deno でも使えるためサポート対象を広げ、
-  辞書の取得・キャッシュを専用パッケージへ切り出す予定。それまで `src/browser` のローダ挙動改修は
-  据え置き（[docs/known-issues.md](docs/known-issues.md) 参照）。
+  モーラ表 ヵ 追加（limitations 記載の意図的オラクル逸脱）・ローダの `@hdae/fetch-cache` 委譲＋
+  `./browser`→`./loader` 改名（[0006](docs/decisions/0006-loader-on-fetch-cache.md)）。
+- **辞書ローダの専用パッケージ化**: 完了（[0006](docs/decisions/0006-loader-on-fetch-cache.md)）。
+  汎用部分はオーナーの `@hdae/fetch-cache` として実現され、`./loader` はその上の辞書固有層
+  （gzip 解凍・JTD1 CRC 検証）になった。fetch-cache に decode フックが入ったら二重解凍を一本化する
+  （[src/loader/mod.ts](src/loader/mod.ts) の NOTE。フィードバック提出済み）。
 - **その後（任意・要検討維持、v0.3.0 には含めない）**: 辞書のオンディスク再エンコードでさらに軽量化。
   実測により **LEXI 索引3本の delta+varint 化と rightId 派生化のみ有効**（gzip 配布サイズ
   ~7.6→~4.9MiB）。CONN 行 dedup（1377 行中 1342 行がユニーク）と READ かなパック（gzip 後 0.07MiB

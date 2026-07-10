@@ -30,7 +30,7 @@
 - **細粒度サブパス**: `./text`（正規化・モーラ表）/ `./dict`（辞書・overlay）/
   `./tokenizer`（Token・ラティス）/ `./njd`（NjdNode・品詞述語・chain rule・各処理段）/
   `./g2p`（FrontendResult・音素・トーン・語アライメント）。既存の `./format`（JTD1 コーデック）・
-  `./browser`（辞書ローダ）は継続。
+  `./browser`（辞書ローダ）は継続（のちに [0006](0006-loader-on-fetch-cache.md) で `./loader` に改名）。
 - **非公開に留める**: `njd/digit_lut` の変換 LUT 等の実装詳細、`_dict_path`（テスト専用）。
 - yomi が持たない `make_label`/`extract_fullcontext` 相当（モデル固有のフルコンテキストラベル）は
   両参照が引く中立境界の外なので、引き続き非公開＝呼び出し側で組む（[0001](0001-neutral-core-no-model-adapters.md)）。

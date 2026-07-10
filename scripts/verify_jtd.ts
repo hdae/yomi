@@ -1,6 +1,6 @@
 // CI: 生成した JTD1 辞書を magic + 全セクション CRC + サイズ下限で検証する（壊れていれば fail loud）。
 // 呼び出し例: deno run --allow-read scripts/verify_jtd.ts fixtures/naist-jdic.jtd
-import { verifyJtd } from "../src/browser/mod.ts";
+import { verifyJtd } from "../src/loader/mod.ts";
 
 if (import.meta.main) {
   const path = Deno.args[0] ?? "fixtures/naist-jdic.jtd";

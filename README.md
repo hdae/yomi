@@ -11,12 +11,15 @@ browser.
 - **アクセント付き G2P**: 読み・アクセント核位置・アクセント句境界・ポーズ・実在記号
   （「！」「？」「…」等の正規形）を出力。ブラウザ向け TTS に不足していた「日本語の
   アクセント付き G2P」を提供します
-- **実行時依存ゼロ**: ブラウザ / Deno / Node / Workers で同一に動作。外部プロセス・WASM・GPL 依存なし
+- **実行時依存ゼロ（コア）**: ブラウザ / Deno / Node / Workers で同一に動作。外部プロセス・WASM・
+  GPL 依存なし（辞書ローダ `@hdae/yomi/loader` のみ、同一オーナーのゼロ依存パッケージ
+  [`@hdae/fetch-cache`](https://jsr.io/@hdae/fetch-cache) を使います）
 - **OpenJTalk 系互換**: naist-jdic 辞書・lindera 互換の分かち書き・jpreprocess 互換の NJD アクセント後段
 - **モデル非依存**: 読み・モーラ・音素・モーラ毎のトーンを中立な形で出力。モデル固有の音素・トーン形式への
   変換（PAD トークン・トーン規約など）は呼び出し側で行います
-- **辞書キャッシュ**: `@hdae/yomi/browser` が Cache API に辞書をキャッシュし、magic + CRC で整合性検証
-  （破損は fail loud、破損キャッシュは真実源から取り直す self-heal）
+- **辞書キャッシュ**: `@hdae/yomi/loader` が Cache API に辞書をキャッシュし、magic + CRC で整合性検証
+  （破損は fail loud、破損キャッシュは真実源から取り直す self-heal。Cache API が無い環境では
+  素の fetch に自動縮退）
 
 ## インストール
 
@@ -28,7 +31,7 @@ deno add jsr:@hdae/yomi
 
 ```typescript
 import { analyze } from "@hdae/yomi";
-import { getDictionary } from "@hdae/yomi/browser";
+import { getDictionary } from "@hdae/yomi/loader";
 
 // 既定の辞書を取得（Cache API にキャッシュ・整合性検証つき）。
 const dict = await getDictionary();
@@ -74,16 +77,19 @@ console.log(analyze(dict, "音声合成のテストを行います。"));
 
 辞書はパッケージに同梱せず、実行時に取得します。既定の取得元は **Hugging Face**（`hdae/yomi-dict`
 dataset。GitHub の CORS 制約を避けるため）で、**gzip 版**（~6.4MB）を取得し `DecompressionStream` で
-解凍します。`@hdae/yomi/browser` の `getDictionary` は取得結果を **Cache API** に保存し、解凍後のバイト列を
+解凍します。`@hdae/yomi/loader` の `getDictionary` は取得結果を **Cache API** に保存し、解凍後のバイト列を
 JTD1 の magic とセクション CRC で整合性検証してから `JtdDictionary` を返します（破損は throw＝fail loud）。
-破損・解凍失敗キャッシュは真実源（network）から取り直します（self-heal）。
+破損・解凍失敗キャッシュは真実源（network）から取り直します（self-heal）。取得・キャッシュの
+オーケストレーションは [`@hdae/fetch-cache`](https://jsr.io/@hdae/fetch-cache) に委譲しており、
+Cache API が無いランタイム（Node.js 等）では素の fetch に、quota 超過などの cache I/O 失敗時も
+network 側に自動縮退します（取得は落ちません）。
 
 辞書はパッケージ版とは独立に更新されるため、既定の取得は**辞書リポジトリの特定コミット**に固定しています
 （そのコミット SHA をコードに埋め込んでいます）。コミットで固定していれば内容が変わらないので、安全にキャッシュ
 できます。用途に応じて `revision`（取得するコミット）や `url`（取得元）を指定できます。
 
 ```typescript
-import { fetchDictionaryBytes, getDictionary } from "@hdae/yomi/browser";
+import { fetchDictionaryBytes, getDictionary } from "@hdae/yomi/loader";
 
 // 既定: 埋め込んだコミットの辞書を取得（推奨。JtdDictionary が返り、キャッシュされる）
 const dict = await getDictionary();

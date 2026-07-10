@@ -1,6 +1,9 @@
-// browser/mod.ts の単体テスト。fetch と Cache API をモックして、既定 revision 解決・上書き・
-// 不変 SHA のキャッシュ / 可変 ref（main）の SHA 解決＋キャッシュ・self-heal・gzip 自動解凍・整合性検証
-// （fail loud）を検証する。依存ゼロを守るため、テスト用の最小 JTD1 バイト列は format 定数から手組みする。
+// loader/mod.ts の単体テスト。globalThis の fetch と Cache API をモックして、既定 revision 解決・
+// 上書き・不変 SHA のキャッシュ / 可変 ref（main）の SHA 解決＋キャッシュ・self-heal・gzip 自動解凍・
+// 整合性検証（fail loud）を検証する。キャッシュのオーケストレーションは @hdae/fetch-cache に委譲した
+// （docs/decisions/0006）が、ここは「yomi のローダとしての外形契約」を丸ごと縛る統合テストなので
+// 委譲後も同じ表明を維持する（fetch-cache は globalThis.fetch / caches を既定で使うためモックが効く）。
+// テスト用の最小 JTD1 バイト列は format 定数から手組みする。
 
 import { fetchDictionaryBytes, getDictionary, verifyJtd } from "./mod.ts";
 import {

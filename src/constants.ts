@@ -13,7 +13,8 @@ export const VERSION = "0.3.0";
  * 辞書はパッケージ版と独立に更新されるため、パッケージ版ではなくこのコミットで固定する
  * （`resolve/{revision}/…` は immutable・reproducible）。辞書を差し替えたら HF へ上げ直してこの SHA を更新する。
  * 40桁 hex の SHA はそのまま取得・キャッシュする（不変）。`"main"` 等の可変 ref は既定ホストでは
- * `DICT_REVISION_API` で現在の SHA に解決してから取得するので、変わらなければキャッシュから返る（再 DL 回避）。
+ * HF revision API（`resolveHfRevision`）で現在の SHA に解決してから取得するので、変わらなければ
+ * キャッシュから返る（再 DL 回避）。
  * DECIDED: 版依存をやめ辞書リポのコミットで固定する（docs/decisions/0003）。
  */
 export const DICT_REVISION = "ab847217c833593c3aec9875b9bfa6ff9789dc29";
@@ -26,9 +27,8 @@ export const DICT_URL =
   "https://huggingface.co/datasets/hdae/yomi-dict/resolve/{revision}/naist-jdic.jtd.gz";
 
 /**
- * 可変 ref（`"main"` 等）を現在のコミット SHA に解決する HF dataset API（`{ref}` を解決）。
- * getDictionary は既定ホストで可変 ref を渡されたとき、これで SHA を引いてから SHA 固定で取得・キャッシュする
- * （SHA が変わらなければ小さな JSON 問い合わせだけで DL を省ける）。`{"sha": …}` を返す前提。
+ * 既定辞書の HF リポジトリ（dataset）。可変 ref（`"main"` 等）の SHA 解決
+ * （`@hdae/fetch-cache/hf` の `resolveHfRevision`）に使う。取得 URL 自体は
+ * DICT_URL テンプレが持つ（ミラーへの上書きは `url` オプションで可能なまま）。
  */
-export const DICT_REVISION_API =
-  "https://huggingface.co/api/datasets/hdae/yomi-dict/revision/{ref}";
+export const DICT_REPO = "hdae/yomi-dict";

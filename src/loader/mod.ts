@@ -1,5 +1,5 @@
 /**
- * `@hdae/yomi/browser` — ブラウザ用の辞書ローダ（純ブラウザ API・依存ゼロ）。
+ * `@hdae/yomi/loader` — 辞書ローダ（取得・キャッシュ・検証。ブラウザ / Deno / Node / Workers）。
  *
  * 辞書 JTD1（~19MB、gzip で ~6.4MB）はパッケージに同梱せず、実行時に取得する。既定の取得元は
  * **Hugging Face**（`hdae/yomi-dict` dataset。GitHub の CORS 制約を避ける）で、**gzip 版**を取得して
@@ -11,17 +11,23 @@
  * 常に最新の辞書が要る場合は `revision: "main"` 等の可変 ref を渡す＝既定ホストでは現在の SHA を解決してから
  * 取得するので、SHA が変わらなければキャッシュから返す（辞書本体の再 DL を省く）。
  *
- * MUST: ここは実行時依存ゼロ。Cache API / fetch / DecompressionStream / TextDecoder などブラウザ標準のみを使う。
+ * 取得・キャッシュのオーケストレーション（Cache API・self-heal・quota 等の cache I/O 失敗時の
+ * network 縮退・進捗通知）は同一オーナーの `@hdae/fetch-cache`（実行時依存ゼロ）に委譲し、
+ * ここには辞書固有の層（gzip 自動解凍・JTD1 magic+CRC 検証・既定 URL/revision）だけを置く
+ * （docs/decisions/0006）。`caches` が無いランタイム（Node.js 等）では素の fetch に自動縮退する。
  *
  * @module
  */
 
+import { fetchBytes, type FetchProgress } from "@hdae/fetch-cache";
+import { isCommitSha, resolveHfRevision } from "@hdae/fetch-cache/hf";
 import { JtdContainer } from "../format/reader.ts";
 import { crc32Hex } from "../format/crc32.ts";
 import { JtdDictionary } from "../dict/dictionary.ts";
-import { DICT_REVISION, DICT_REVISION_API, DICT_URL, VERSION } from "../constants.ts";
+import { DICT_REPO, DICT_REVISION, DICT_URL, VERSION } from "../constants.ts";
 
 export { VERSION };
+export type { FetchProgress };
 
 const DEFAULT_CACHE_NAME = "yomi-dict";
 
@@ -37,6 +43,8 @@ export type GetDictionaryOptions = {
   revision?: string;
   /** Cache Storage の名前空間。既定 "yomi-dict"。 */
   cacheName?: string;
+  /** ダウンロード進捗（チャンク毎）。キャッシュヒット時は呼ばれない。 */
+  onProgress?: (progress: FetchProgress) => void;
 };
 
 /**
@@ -70,12 +78,10 @@ export const verifyJtd = (bytes: Uint8Array): void => {
 /** gzip マジック（0x1f 0x8b）で始まるか。 */
 const isGzip = (b: Uint8Array): boolean => b.length >= 2 && b[0] === 0x1f && b[1] === 0x8b;
 
-/** 不変（キャッシュ可能）な revision か＝40桁 hex のコミット SHA。ブランチ/タグ/短縮 SHA は可変扱い。 */
-const isImmutableRevision = (rev: string): boolean => /^[0-9a-f]{40}$/.test(rev);
-
 /** gzip バイト列を `DecompressionStream('gzip')` で解凍する（破損 gzip は throw）。 */
-const gunzip = async (gz: Uint8Array<ArrayBuffer>): Promise<Uint8Array<ArrayBuffer>> => {
-  const body = new Response(gz).body;
+const gunzip = async (gz: Uint8Array): Promise<Uint8Array<ArrayBuffer>> => {
+  // コピーで ArrayBuffer 裏付けを保証する（fetch-cache から届く view の型を吸収）。
+  const body = new Response(new Uint8Array(gz)).body;
   if (body === null) throw new Error("辞書解凍失敗: gzip ストリームが空");
   const out = body.pipeThrough(new DecompressionStream("gzip"));
   return new Uint8Array(await new Response(out).arrayBuffer());
@@ -85,26 +91,10 @@ const gunzip = async (gz: Uint8Array<ArrayBuffer>): Promise<Uint8Array<ArrayBuff
  * 取得アーティファクト（gzip または生 JTD1）を検証済み JTD1 の ArrayBuffer にする。
  * 先頭バイトで gzip を自動判定し、gzip なら解凍してから CRC 検証する。破損・解凍失敗は throw。
  */
-const materialize = async (raw: Uint8Array<ArrayBuffer>): Promise<ArrayBuffer> => {
-  const jtd = isGzip(raw) ? await gunzip(raw) : raw;
+const materialize = async (raw: Uint8Array): Promise<ArrayBuffer> => {
+  const jtd = isGzip(raw) ? await gunzip(raw) : new Uint8Array(raw);
   verifyJtd(jtd);
   return jtd.buffer;
-};
-
-/**
- * 可変 ref（"main" 等）を現在のコミット SHA に解決する（HF dataset API）。SHA 固定に直してから取得・
- * キャッシュすることで、SHA が変わらなければ辞書本体（~6.4MB）の再 DL を省ける（小さな JSON 問い合わせのみ）。
- */
-const resolveRevision = async (ref: string): Promise<string> => {
-  const res = await fetch(DICT_REVISION_API.replace(/\{ref\}/g, ref));
-  if (!res.ok) {
-    throw new Error(`辞書リビジョン解決失敗: HTTP ${res.status} ${res.statusText} (${ref})`);
-  }
-  const info = await res.json() as { sha?: unknown };
-  if (typeof info.sha !== "string") {
-    throw new Error(`辞書リビジョン解決失敗: 応答に sha が無い (${ref})`);
-  }
-  return info.sha;
 };
 
 /**
@@ -115,42 +105,29 @@ const resolveRevision = async (ref: string): Promise<string> => {
  */
 const fetchVerifiedBuffer = async (opts: GetDictionaryOptions): Promise<ArrayBuffer> => {
   const rawRevision = opts.revision ?? DICT_REVISION;
-  const cacheName = opts.cacheName ?? DEFAULT_CACHE_NAME;
   // 既定ホストで可変 ref を渡されたら現在の SHA に解決する（SHA 固定＝キャッシュ可＝無駄 DL 回避）。
-  // url を上書きした場合は解決経路が使えないので、可変 ref のまま毎回取得する。
-  const revision = (opts.url === undefined && !isImmutableRevision(rawRevision))
-    ? await resolveRevision(rawRevision)
+  // url を上書きした場合は解決経路（HF API）が使えないので、可変 ref のまま毎回取得する。
+  // resolveHfRevision は SHA を渡せばネットワークに出ずそのまま返す。
+  const revision = opts.url === undefined
+    ? await resolveHfRevision({ repo: DICT_REPO, kind: "dataset", revision: rawRevision })
     : rawRevision;
   const requestUrl = (opts.url ?? DICT_URL).replace(/\{revision\}/g, revision);
-  // 不変 SHA のみキャッシュ（可変 ref は上で解決済み。解決できない url 上書き時のみ非キャッシュ）。
-  const useCache = typeof caches !== "undefined" && isImmutableRevision(revision);
 
-  if (useCache) {
-    const cache = await caches.open(cacheName);
-    const cached = await cache.match(requestUrl);
-    if (cached) {
-      const raw = new Uint8Array(await cached.arrayBuffer());
-      try {
-        return await materialize(raw);
-      } catch {
-        // 破損キャッシュ・解凍失敗。真実源から取り直すため evict してフォールスルー（self-heal）。
-        await cache.delete(requestUrl);
-      }
-    }
-  }
-
-  const response = await fetch(requestUrl);
-  if (!response.ok) {
-    throw new Error(`辞書取得失敗: HTTP ${response.status} ${response.statusText} (${requestUrl})`);
-  }
-  const raw = new Uint8Array(await response.arrayBuffer());
-  const buffer = await materialize(raw); // 解凍+検証（破損は throw＝壊れたものはキャッシュしない）。
-
-  if (useCache) {
-    const cache = await caches.open(cacheName);
-    await cache.put(requestUrl, new Response(raw)); // 取得物（gzip）を保存。
-  }
-  return buffer;
+  // 不変 SHA のみキャッシュ（url 上書き＋可変 ref のときだけ非キャッシュ）。validate は
+  // キャッシュ・network の両経路に適用され、解凍不能・CRC 不一致は「破損」として
+  // キャッシュなら evict → 真実源から再取得、network ならそのまま throw（fetch-cache 側の契約）。
+  const raw = await fetchBytes(requestUrl, {
+    cacheName: opts.cacheName ?? DEFAULT_CACHE_NAME,
+    cache: isCommitSha(revision),
+    validate: async (bytes) => {
+      await materialize(bytes);
+    },
+    onProgress: opts.onProgress,
+  });
+  // NOTE: validate 内で一度解凍済みだが、fetchBytes は取得物（gzip）をそのまま返すため
+  // ここでもう一度解凍する（二重解凍・数十ms・受容済み）。fetch-cache に decode フックが
+  // 入ったら validate と戻り値を一本化する（docs/decisions/0006）。
+  return await materialize(raw);
 };
 
 /**
@@ -161,9 +138,10 @@ const fetchVerifiedBuffer = async (opts: GetDictionaryOptions): Promise<ArrayBuf
  * 現在の SHA を解決してから取得するので、変わっていなければキャッシュから返る。取得・キャッシュいずれの
  * 経路でも magic + CRC を検証し、破損は throw する（fail loud）。検証済みなので `JtdDictionary.load` の再 CRC は省く。
  *
- * NOTE: Cache API は https / localhost の Secure Context でのみ利用可能。非対応環境では
- *       fetch のみで取得し、キャッシュはスキップする。DecompressionStream はブラウザ / Deno / Node 18+ /
- *       Workers で利用可能。
+ * NOTE: Cache API は https / localhost の Secure Context と Deno で利用可能。無いランタイム
+ *       （Node.js 等）では素の fetch に自動縮退する。quota 超過等の cache I/O 失敗も取得を落とさず
+ *       network 側へ縮退して続行する（console.warn で通知 — `@hdae/fetch-cache` の契約）。
+ *       DecompressionStream はブラウザ / Deno / Node 18+ / Workers で利用可能。
  */
 export const getDictionary = async (opts: GetDictionaryOptions = {}): Promise<JtdDictionary> => {
   const buffer = await fetchVerifiedBuffer(opts);

@@ -4,13 +4,14 @@
  * モデル非依存の G2P。特定モデル向けの音素・トーン梱包は持たず、中立の建材
  * （`moraToPhones` / `moraTones` / `punctuationMarks` / `wordPhoneAlignment`）を提供して
  * 呼び出し側で組む（docs/decisions/0001）。JTD1 辞書の低レベルコーデックは
- * `@hdae/yomi/format`、ブラウザ辞書ローダは `@hdae/yomi/browser` に分離してある。
+ * `@hdae/yomi/format`、辞書ローダは `@hdae/yomi/loader` に分離してある。
  *
  * 細粒度の言語モデル（NJD ノード・トークナイザ・辞書・モーラ表など）は、
  * リファレンス実装（jpreprocess / pyopenjtalk）に倣ってドメイン別サブパス
  * （`@hdae/yomi/njd` `/tokenizer` `/dict` `/text` `/g2p`）に公開する。
  *
- * 実行時依存ゼロ（MUST）。ブラウザ / Node / Deno / Workers で同一動作。
+ * コアは実行時依存ゼロ（MUST）。ブラウザ / Node / Deno / Workers で同一動作
+ * （`/loader` のみ同一オーナーのゼロ依存 `@hdae/fetch-cache` を使う＝docs/decisions/0006）。
  *
  * @module
  */
