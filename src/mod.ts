@@ -2,7 +2,7 @@
  * `@hdae/yomi` — 日本語テキストフロントエンド（テキスト → 読み＋アクセント＋句境界）の中立コア。
  *
  * モデル非依存の G2P。特定モデル向けの音素・トーン梱包は持たず、中立の建材
- * （`moraToPhones` / `moraTones` / `pausePunct` / `wordPhoneAlignment`）を提供して
+ * （`moraToPhones` / `moraTones` / `punctuationMarks` / `wordPhoneAlignment`）を提供して
  * 呼び出し側で組む（docs/decisions/0001）。JTD1 辞書の低レベルコーデックは
  * `@hdae/yomi/format`、ブラウザ辞書ローダは `@hdae/yomi/browser` に分離してある。
  *
@@ -36,5 +36,12 @@ export { analyzeToNodes } from "./njd/frontend.ts";
 // 中立の建材（モデル固有の梱包は呼び出し側で組む）。
 export { moraToPhones } from "./g2p/phonemes.ts";
 export { moraTones } from "./g2p/tones.ts";
-export { pausePunct, wordPhoneAlignment } from "./g2p/word_alignment.ts";
-export type { AccentPhrase, FrontendResult, Mora, WordPhones } from "./g2p/types.ts";
+export { punctuationMarks } from "./g2p/punctuation.ts";
+export { wordPhoneAlignment } from "./g2p/word_alignment.ts";
+export type {
+  AccentPhrase,
+  FrontendResult,
+  Mora,
+  PunctuationMark,
+  WordPhones,
+} from "./g2p/types.ts";

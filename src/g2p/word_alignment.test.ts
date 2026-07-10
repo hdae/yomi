@@ -2,13 +2,13 @@
 //
 // 中核の表明テスト（MUST）:
 //   wordPhoneAlignment(nodes).flatMap(w => w.phones)
-//     === analyze(...).accentPhrases から素直に組んだ音素列
+//     === analyze(...) の leadingPunctuations + accentPhrases から素直に組んだ音素列
 // が全文で完全一致すること。node 走査（アライメント）と句構造走査（コア結果）は
-// 別経路なので、共有ヘルパ（nodeToMoras/moraToPhones/pausePunct）による音素生成の
-// 一元化と、走査ロジック（句グルーピング・句読点位置・文末 long）の一致を実辞書で
+// 別経路なので、共有ヘルパ（nodeToMoras/moraToPhones/punctuationMarks）による音素生成の
+// 一元化と、走査ロジック（句グルーピング・実在記号位置・文末 long）の一致を実辞書で
 // 網羅検証する。
 
-import { pausePunct, wordPhoneAlignment } from "./word_alignment.ts";
+import { wordPhoneAlignment } from "./word_alignment.ts";
 import { moraToPhones } from "./phonemes.ts";
 import { JtdDictionary } from "../dict/dictionary.ts";
 import { analyze, analyzeWithWords } from "../analyze.ts";
@@ -77,13 +77,12 @@ Deno.test({
       const result = analyze(dict, text);
       const nodes = analyzeToNodes(dict, text);
       const align = wordPhoneAlignment(nodes);
-      // 期待: コアのアクセント句列から素直に音素を組む（両端 PAD なし）。node 走査
-      // （align）と句構造走査（result）の別経路が同じ音素列に落ちることを検証する。
-      const expected: string[] = [];
+      // 期待: コア結果から素直に音素を組む（両端 PAD なし）。node 走査（align）と
+      // 句構造走査（result）の別経路が同じ音素列に落ちることを検証する。
+      const expected: string[] = [...result.leadingPunctuations];
       for (const phrase of result.accentPhrases) {
         for (const mora of phrase.moras) expected.push(...moraToPhones(mora));
-        const punct = pausePunct(phrase.pauseAfter);
-        if (punct !== undefined) expected.push(punct);
+        expected.push(...phrase.punctuations);
       }
       const flatAlign = align.flatMap((w) => w.phones);
       assertEq(flatAlign, expected, `[${text}] 音素連結不一致`);
@@ -92,18 +91,27 @@ Deno.test({
 });
 
 Deno.test({
-  name: "wordPhoneAlignment(実辞書): 各語 surface が空でなく、句読点語は phones 1個",
+  name: "wordPhoneAlignment(実辞書): 各語 surface が空でなく、記号要素は正規形1個",
   ignore: !dictExists,
   fn() {
     const dict = loadDict();
+    // 生の記号1文字 → 期待する正規形（アライメント要素の phones）。
+    const RAW_TO_PUNCT: Record<string, string> = {
+      "、": ",",
+      "。": ".",
+      "！": "!",
+      "？": "?",
+      "…": "…",
+    };
     for (const text of CORPUS) {
       const nodes = analyzeToNodes(dict, text);
       const align = wordPhoneAlignment(nodes);
       for (const w of align) {
         assert(w.surface.length > 0, `[${text}] surface 空`);
         assert(w.phones.length > 0, `[${text}] phones 空: ${w.surface}`);
-        if (w.surface === "," || w.surface === ".") {
-          assertEq(w.phones, [w.surface], `[${text}] 句読点語の phones`);
+        const punct = RAW_TO_PUNCT[w.surface];
+        if (punct !== undefined) {
+          assertEq(w.phones, [punct], `[${text}] 記号要素の phones`);
         }
       }
     }
@@ -111,16 +119,18 @@ Deno.test({
 });
 
 Deno.test({
-  name: "wordPhoneAlignment(実辞書): 句読点は必ず末尾 '.'（文末 long）で終わる",
+  name: "wordPhoneAlignment(実辞書): 末尾要素は実在記号に従う（文末 '.' の合成はしない）",
   ignore: !dictExists,
   fn() {
     const dict = loadDict();
-    for (const text of CORPUS) {
-      const nodes = analyzeToNodes(dict, text);
-      const align = wordPhoneAlignment(nodes);
-      if (align.length === 0) continue;
-      assertEq(align.at(-1)!.phones, ["."], `[${text}] 末尾は文末 long の '.'`);
-    }
+    const lastOf = (text: string) => wordPhoneAlignment(analyzeToNodes(dict, text)).at(-1)!;
+    // 実在の句点で終わる文 → 末尾は "." 要素。
+    assertEq(lastOf("今日は良い天気です。").phones, ["."], "実在句点");
+    // ASCII "?" で終わる文 → 末尾は "?" 要素（全角化 → 正規形）。
+    assertEq(lastOf("私はそう思う!って感じ?").phones, ["?"], "実在疑問符");
+    // 記号なしで終わる文 → 末尾は語要素のまま（pauseAfter=long でも "." を合成しない）。
+    assertEq(lastOf("テスト").surface, "テスト", "記号なし文末");
+    assertEq(lastOf("テスト").phones, ["t", "e", "s", "u", "t", "o"], "記号なし文末の音素");
   },
 });
 

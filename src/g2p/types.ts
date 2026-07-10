@@ -15,14 +15,35 @@ export type Mora = {
   devoiced?: boolean;
 };
 
-/** アクセント句（1つのピッチ核を持つモーラ列と、句末のポーズ）。 */
+/**
+ * 記号1文字とその正規形句読点の対。
+ * surface は正規化後テキスト上の生の1文字（例 "！"）、punct は中立の正規形
+ * （"!" / "?" / "…" / "," / "." / "'" / "-" のいずれか。punctuationMarks 参照）。
+ */
+export type PunctuationMark = {
+  /** 正規化後の生の記号1文字（例 "！"）。 */
+  surface: string;
+  /** 正規形句読点（例 "!"）。 */
+  punct: string;
+};
+
+/** アクセント句（1つのピッチ核を持つモーラ列と、句末のポーズ・実在記号）。 */
 export type AccentPhrase = {
   /** 句を構成するモーラ列。 */
   moras: Mora[];
   /** 1-origin。0 = 平板（核なし）。 */
   accentNucleus: number;
-  /** 句末のポーズ長。読点=short / 句点・文末=long。 */
+  /**
+   * 句末のポーズ長。品詞（読点=short / 句点=long）ベースの導出値で、文末の句は
+   * 実在記号に関係なく long に強制される。実在した記号そのものは punctuations が持つ。
+   */
   pauseAfter: "none" | "short" | "long";
+  /**
+   * 句の直後に実在した記号の正規形列（例: 「そう…？」 → ["…", "?"]、出現順）。
+   * 実在記号のみを反映する（文末 long 強制では増えない）ので、「実在の句点で文が
+   * 終わったか」は "." の有無で判定できる。正規形の字母と写像対象は punctuationMarks 参照。
+   */
+  punctuations: string[];
 };
 
 /** フロントエンドの最終出力（正規化テキストとアクセント句列）。 */
@@ -31,6 +52,11 @@ export type FrontendResult = {
   normalizedText: string;
   /** アクセント句の列。 */
   accentPhrases: AccentPhrase[];
+  /**
+   * 先頭のアクセント句より前に実在した記号の正規形列（例: 「…こんにちは」 → ["…"]）。
+   * 記号だけで句が1つも無い入力では、全記号がここに入る。
+   */
+  leadingPunctuations: string[];
 };
 
 /** アクセント句内の1語（実モーラを持つ NJD ノードと、句内文脈で解決済みのモーラ列）。 */
@@ -52,12 +78,14 @@ export type PhraseSegment = {
   accentNucleus: number;
   /** 句末のポーズ長。読点=short / 句点・文末=long。 */
   pauseAfter: "none" | "short" | "long";
+  /** 句の直後に実在した記号（生の1文字と正規形の対、ノード順）。 */
+  punctuations: PunctuationMark[];
 };
 
-/** 語アライメントの1要素（1 NJD ノード、または句読点1個）。 */
+/** 語アライメントの1要素（1 NJD ノード、または実在記号1文字）。 */
 export type WordPhones = {
-  /** 語の表層（NJD ノード表層）、または句読点記号（","/"."）。 */
+  /** 語の表層（NJD ノード表層）、または実在記号の生の1文字（例 "！"）。 */
   surface: string;
-  /** その語が生む音素列（両端 "_" は含まない）。 */
+  /** その語が生む音素列（両端 "_" は含まない）。記号要素は正規形1個（例 ["!"]）。 */
   phones: string[];
 };
