@@ -16,7 +16,8 @@
   - 読み・モーラ・アクセント核・句境界（`FrontendResult`）
   - モーラ → 音素（`moraToPhones`）、NJD ノード → モーラ（`nodeToMoras`）
   - 核位置 → 各モーラのトーン 0/1（`moraTones`）
-  - 語 → 音素アライメント（`wordPhoneAlignment`）、pause → 句読点（`pausePunct`）
+  - 語 → 音素アライメント（`wordPhoneAlignment`）、pause → 句読点（`pausePunct`。
+    のちに [0005](0005-punctuation-exposure.md) で実在記号 `punctuations` に置換）
 - **モデル固有のアダプタ**（PAD トークン、`given_phone`/`given_tone` 梱包、トーン反転規約、
   句読点の phone 化など）は yomi に置かず、**呼び出し側で組む**。
 - 具体的に `@hdae/yomi/sbv2`（`toSbv2PhoneTone` / `Sbv2PhoneTone`）を削除する（破壊的変更・
@@ -26,7 +27,8 @@
 
 - コアがモデル知識から解放され、任意モデルへ再利用可能。
 - 破壊的変更: 旧 `@hdae/yomi/sbv2` 利用側は自前で梱包する。従来の `toSbv2PhoneTone` 相当は
-  中立 export から再構成できる:
+  中立 export から再構成できる（例は採択当時のもの。`pausePunct` はのちに
+  [0005](0005-punctuation-exposure.md) で `punctuations` に置換された）:
 
   ```ts
   import { analyze, moraToPhones, moraTones, pausePunct } from "@hdae/yomi";

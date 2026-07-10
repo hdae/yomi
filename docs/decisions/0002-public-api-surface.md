@@ -25,7 +25,8 @@
 
 - **薄いファサード `.`**（jpreprocess facade / pyopenjtalk `g2p`+`run_frontend` 相当）:
   `analyze` / `analyzeWithWords` / `analyzeToNodes`(=run_frontend) / `JtdDictionary`＋メタ型 /
-  overlay 一式 / 中立建材（`moraToPhones` `moraTones` `pausePunct` `wordPhoneAlignment`）＋出力型。
+  overlay 一式 / 中立建材（`moraToPhones` `moraTones` `punctuationMarks` `wordPhoneAlignment`。
+  当初あった `pausePunct` は [0005](0005-punctuation-exposure.md) で置換）＋出力型。
 - **細粒度サブパス**: `./text`（正規化・モーラ表）/ `./dict`（辞書・overlay）/
   `./tokenizer`（Token・ラティス）/ `./njd`（NjdNode・品詞述語・chain rule・各処理段）/
   `./g2p`（FrontendResult・音素・トーン・語アライメント）。既存の `./format`（JTD1 コーデック）・
