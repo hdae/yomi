@@ -64,11 +64,11 @@
   パッケージ版と独立）。不変 SHA はキャッシュ。`revision: "main"` 等の可変 ref は HF revision API で現在 SHA を
   解決→SHA固定でキャッシュ（変わらなければ小さな問い合わせのみで再DL回避。resolve は no-store で 304 不可のため）。
   Actions での辞書処理は廃止（`release-dict.yml` 削除）。辞書差し替え時のみ hf CLI で上げ直し `DICT_REVISION` 更新。
-- **リリース**: **v0.2.0 まで JSR 公開済み**（v0.2.0 = 2026-07-09。SBV2削除・`/format`分離・ドメイン別
-  サブパス再編＝[0002](docs/decisions/0002-public-api-surface.md)・HF配布/gzip=
-  [0003](docs/decisions/0003-dict-distribution.md) を同梱）。**v0.3.0 準備済み**（レビュー後続一式:
-  golden-3k 回帰配線・型境界バリデータ等の fail-loud 強化・`segmentPhrases` 公開・`/format` 死にコード
-  除去・本家照合6点の決着。タグ `v0.3.0` push → release.yml OIDC → JSR）。
+- **リリース**: **v0.3.0 まで JSR 公開済み**（v0.3.0 = 2026-07-10。golden-3k 回帰配線・型境界
+  バリデータ等の fail-loud 強化・`segmentPhrases` 公開・`/format` 死にコード除去・本家照合6点の決着。
+  v0.2.0 = 2026-07-09。SBV2削除・`/format`分離・ドメイン別サブパス再編＝
+  [0002](docs/decisions/0002-public-api-surface.md)・HF配布/gzip=
+  [0003](docs/decisions/0003-dict-distribution.md)）。次版は未計画。
 - **辞書ローダの専用パッケージ化（計画）**: Cache API は Deno でも使えるためサポート対象を広げ、
   辞書の取得・キャッシュを専用パッケージへ切り出す予定。それまで `src/browser` のローダ挙動改修は
   据え置き（[docs/known-issues.md](docs/known-issues.md) 参照）。
