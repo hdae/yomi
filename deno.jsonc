@@ -1,6 +1,6 @@
 {
   "name": "@hdae/yomi",
-  "version": "0.2.0",
+  "version": "0.3.0",
   // 公開 API。コア（.）はモデル非依存の中立 G2P の薄いファサード。細粒度の言語モデルは
   // リファレンス実装（jpreprocess/pyopenjtalk）に倣いドメイン別サブパスで公開する。
   // JTD1 コーデックは /format、ブラウザ辞書ローダは /browser。モデル固有アダプタは持たない
