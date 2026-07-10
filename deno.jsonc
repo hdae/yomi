@@ -3,7 +3,7 @@
   "version": "0.4.0",
   // 公開 API。コア（.）はモデル非依存の中立 G2P の薄いファサード。細粒度の言語モデルは
   // リファレンス実装（jpreprocess/pyopenjtalk）に倣いドメイン別サブパスで公開する。
-  // JTD1 コーデックは /format、ブラウザ辞書ローダは /browser。モデル固有アダプタは持たない
+  // JTD1 コーデックは /format、辞書ローダは /loader。モデル固有アダプタは持たない
   // （docs/decisions/0001）。
   "exports": {
     ".": "./src/mod.ts",
@@ -15,6 +15,10 @@
     "./format": "./src/format/mod.ts",
     "./loader": "./src/loader/mod.ts"
   },
+  // 依存クールダウン（Deno 2.9+ 既定 24h）は維持しつつ、同一オーナーの fetch-cache のみ除外する
+  // （自リリースは検証済み・ソース照合の上で統合＝docs/decisions/0006。第三者依存には効かせ続ける。
+  // 除外が無いと fetch-cache 更新→即 yomi リリースのフローが毎回 24h 待ちで CI の publish に落ちる）。
+  "minimumDependencyAge": { "exclude": ["jsr:@hdae/fetch-cache"] },
   "tasks": {
     "check": "deno fmt --check && deno lint && deno check . && deno test --allow-read --allow-env",
     // --allow-read: version 焼き込みの drift ガード(version_sync)と実辞書統合テストが読取に使う
