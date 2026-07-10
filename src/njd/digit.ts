@@ -77,6 +77,8 @@ export const njdSetDigit = (nodes: NjdNode[]): NjdNode[] => {
   // ---- 小数点（prev=数, node=．・, next=数）----
   {
     type SkipState = "disabled" | "ifMeishi" | "skipping";
+    // NOTE: 遷移と continue/フォールスルーの別は本家 jpreprocess 0.15.0 digit/mod.rs:37-50 と
+    // 腕単位で対応（連続セパレータ「1・2・3」で2つ目が脱落するのも本家同挙動）。
     let skip: SkipState = "disabled";
     for (let i = 1; i + 1 < nodes.length; i++) {
       const [prev, node, next] = [nodes[i - 1], nodes[i], nodes[i + 1]];

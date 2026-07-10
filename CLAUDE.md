@@ -70,6 +70,11 @@
 - **辞書ローダの専用パッケージ化（計画）**: Cache API は Deno でも使えるためサポート対象を広げ、
   辞書の取得・キャッシュを専用パッケージへ切り出す予定。それまで `src/browser` のローダ挙動改修は
   据え置き（[docs/known-issues.md](docs/known-issues.md) 参照）。
-- **その後（任意）**: 辞書のオンディスク再エンコードでさらに軽量化（CONN 行 dedup・LEXI delta+varint・READ かなパック）。
+- **その後（任意）**: 辞書のオンディスク再エンコードでさらに軽量化。実測により **LEXI 索引3本の
+  delta+varint 化と rightId 派生化のみ有効**（gzip 配布サイズ ~7.6→~4.9MiB）。CONN 行 dedup（1377 行中
+  1342 行がユニーク）と READ かなパック（gzip 後 0.07MiB しか縮まない）は実測で棄却済み。
 - **後回し**: 辞書ソースの pyopenjtalk-plus 化（naist-jdic 系統・BSD-3・品質改善＋大規模化）。採用時は
-  golden を pyopenjtalk-plus オラクルで再生成する。
+  golden を pyopenjtalk-plus オラクルで再生成する。**辞書差し替え時の再照合義務（MUST）**: ①同点
+  タイブレーク方向（yomi は先頭 CSV 行が勝つ。オラクル辞書が jpreprocess-dictionary ビルダ（書込み
+  `.rev()` あり）製の場合のみ一致する実装挙動依存）②unk.def 0 行カテゴリの不在
+  （[docs/limitations.md](docs/limitations.md) の lindera 節参照）。

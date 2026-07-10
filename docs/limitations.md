@@ -19,6 +19,19 @@
 - **正規化は NFKC ではない。** jpreprocess 互換の専用全角化＋ステートフル濁点合成
   （[src/text/normalize.ts](../src/text/normalize.ts)）。合成できない濁点マークが落ちるのも本家同挙動。
 
+## lindera 互換まわり（本家ソース照合済み・現行辞書では出力不変）
+
+- **未知語 `unknownWordEnd` の更新に `rTo > rFrom` ガードを置く。** lindera 3.0.7 は未知語
+  生成規則が 0 行のカテゴリでも `unknown_word_end` を無条件に進める（viterbi.rs:578）が、
+  naist-jdic v0.1.3 は char.def の全 11 カテゴリが unk.def に 1 行以上を持つためガードは恒真で、
+  どんな入力でも出力差は生じない（差は入力ではなく**辞書形状**の性質）。unk.def 0 行カテゴリを
+  持つ辞書へ差し替えた場合のみ乖離しうる（[src/tokenizer/lattice.ts](../src/tokenizer/lattice.ts)）。
+- **Viterbi のコスト累積は f64 の非飽和加算。** lindera 3.0.7 は i32 の `saturating_add`
+  （viterbi.rs:607,634 ほか）。乖離には最小コスト経路自体が i32::MAX（≈2.1e9）へ到達する必要が
+  あり、全エッジが観測最大級コストという最良仮定でも約 4 万文字の無区切り断片が下限（現実には
+  10^5〜10^6 文字級）。f64 は 2^53 まで整数を厳密に保持するため yomi 側に精度上の弱点はなく、
+  非互換は「本家のクランプを再現しない」の一点のみ。文分割後の実用入力では到達不能。
+
 ## dict-builder
 
 - **CSV パーサは naist-jdic 前提の non-quoting・15列固定。** RFC 4180 のクォートは解釈しない。

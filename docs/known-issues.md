@@ -14,17 +14,10 @@ open な問題・作業待ちの項目。意図的な制約は [limitations.md](
   あっても throw する（W-E-6。last-known-SHA フォールバック無し）。
 - `caches` 未定義経路・resolve 失敗・put 失敗・並行呼び出しのテストが無い（W-E-7）。
 
-## 本家ソース照合待ち（互換の未確定点）
+## 解決済みの照合（記録）
 
-- accent_type の `P1` と `P2` が同一式なのは本家準拠か写経時の取りこぼしか（W-C-6③）。
-- digit.ts の小数 skip 状態機: 連続セパレータ（例「1・2・3」）で本家が continue か
-  fall-through か（W-C-7①）。
-- accent_phrase.ts のコメントラベル「Rule 08」重複の本家対応（W-C-2 付記）。
-- 既知語エッジ add 順が lindera（daachorse 頭挿入反転）の同点タイブレークと一致するか（W-B-1）。
-  golden-3k 回帰（`src/golden.test.ts`）では実害ゼロを確認・固定済み。同点衝突そのものの
-  本家一致は未照合。
-
-## lindera との既知の微差（病的入力のみ・方針未確定）
-
-- 未知語処理 `unknownWordEnd` 更新の `rTo > rFrom` ガード（lindera は unk 行 0 でも進める）（L-B-1）。
-- コスト累積に i32 飽和加算が無い（数万文字の無区切り断片でのみ差が出うる）（L-B-2）。
+「本家ソース照合待ち」4点（W-C-6③ P1≡P2 / W-C-7① 小数セパレータ / W-C-2 Rule 08 ラベル /
+W-B-1 同点タイブレーク）と「lindera との既知の微差」2点（L-B-1 / L-B-2）は、jpreprocess 0.15.0 /
+lindera 3.0.7 のソース照合により**全て本家準拠（holds）で解消**した。前者4点は該当コードの
+NOTE/MUST コメントに、後者2点は [limitations.md](limitations.md) に根拠つきで記録済み。
+辞書ソース差し替え時の再照合義務は `CLAUDE.md`（後回し節）に記載。

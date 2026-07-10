@@ -87,6 +87,8 @@ const calcTopNodeAcc = (
       return 0;
     case "C5":
       return topAcc;
+    // NOTE: P1 と P2 が同一式なのは本家準拠（jpreprocess 0.15.0 accent_type.rs:115-118 も
+    // 同一。両者は結合規則の文字列表現が違うだけで計算に差はない）。
     case "P1":
       return topAcc === 0 ? 0 : moraAcc + nodeAcc;
     case "P2":

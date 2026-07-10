@@ -65,6 +65,9 @@ export const buildDictionary = (src: {
   }
 
   // ---- 表層形の集約とトライ構築 ----
+  // MUST: 同一表層のエントリ列は CSV 行順のまま保持する（push 追加のみ・sort/reverse 禁止）。
+  // Viterbi 同点タイブレーク（先着＝先頭行が勝つ）が jpreprocess オラクルと一致する前提
+  // （src/tokenizer/lattice.ts の既知語追加コメントと対）。
   const bySurface = new Map<string, LexicalEntry[]>();
   for (const e of entries) {
     const list = bySurface.get(e.surface);

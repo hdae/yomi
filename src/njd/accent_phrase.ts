@@ -67,7 +67,9 @@ const chainFlag = (prev: NjdNode, node: NjdNode): boolean => {
   }
   /* Rule 10: 「*,接尾」の後の「名詞」は別のアクセント句に */
   if (isSetsubi(p) && isMeishi(c)) return false;
-  /* Rule 08: 付属語の連続はくっつける */
+  /* Rule 08: 付属語の連続はくっつける
+     （Rule 08 が Rule 09 を挟んで2箇所に割れているのは本家 accent_phrase.rs:87-92 の
+     忠実再現。前半は Rule 09 に食われる前に決着させる必要がある順序依存の分割） */
   if ((isJodoushi(p) || isJoshi(p)) && (isJodoushi(c) || isJoshi(c))) return true;
   /* Rule 09: 付属語の後の自立語は別のアクセント句に */
   if (isJodoushi(p) || isJoshi(p)) return false;

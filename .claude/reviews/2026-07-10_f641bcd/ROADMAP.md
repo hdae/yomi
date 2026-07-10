@@ -5,10 +5,13 @@
 > 「中」の W-C-2..7テスト / W-A-4 / W-A-6 / W-A-8+W-F-7テスト側 / W-D-5 / W-E-1..4+W-A-7 /
 > W-A-1,2 / W-F-5+X-2（limitations/known-issues新設）/ W-C-6②、
 > 「低」の W-D-1（セグメンタ抽出・実施済み）/ W-A-5,9+W-F-6 / W-F-2 / W-F-3。
-> **未対応で残るもの**: W-A-3（META 検証 — Zod は実行時依存ゼロ MUST と衝突、手書きバリデータ要設計）、
-> W-E-5..8 と L-E 系（ローダ=専用パッケージ化まで据え置き、known-issues.md 起票済み）、
-> overlay perf（L）、jpreprocess 本家照合 needs-human 4点（known-issues.md 起票済み）、
-> ADR 参照実在チェックの dev スクリプト（任意）。
+> **同日第2弾で追加消化**: W-A-3（META+overlay の手書き構造バリデータ `src/dict/validate.ts`）、
+> jpreprocess/lindera 本家照合 needs-human 4点＋ L-B-1/L-B-2（ローカル cargo registry の
+> jpreprocess 0.15.0 / lindera 3.0.7 ソース照合で**全6点 holds**。tie-break は二重反転相殺
+> ＝正味 CSV 行順で一致、golden 純粋同点語 14/14 経験確認。コード NOTE/MUST・limitations.md・
+> CLAUDE.md 再照合義務に反映済み）。
+> **未対応で残るもの**: W-E-5..8 と L-E 系（ローダ=専用パッケージ化まで据え置き、known-issues.md
+> 起票済み）、overlay perf（L）、ADR 参照実在チェックの dev スクリプト（任意）。
 
 各行の ID は findings/ の指摘 ID。推定コストは「S=~30分 / M=数時間 / L=半日以上」の相対感。
 

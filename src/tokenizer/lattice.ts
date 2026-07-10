@@ -81,6 +81,10 @@ export const tokenizeToNodes = (
     }
 
     // ---- 既知語 ----
+    // MUST: 同一表層内のエントリは辞書の格納順（= CSV 行順）のまま順方向で追加する。
+    // コスト更新は厳密 < なので同点は先着＝先頭 CSV 行が勝ち、これが jpreprocess オラクル
+    // の正味挙動と一致する（jpreprocess-dictionary の書込み逆順と lindera の頭挿入反転が
+    // 相殺して CSV 行順になる。dict-builder/src/build.ts の表層集約コメントと対）。
     let found = false;
     dict.trie.commonPrefixSearch(text, p, (surfaceId, end) => {
       const from = dict.entryIndex[surfaceId];
