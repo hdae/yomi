@@ -68,16 +68,16 @@
   パッケージ版と独立）。不変 SHA はキャッシュ。`revision: "main"` 等の可変 ref は HF revision API で現在 SHA を
   解決→SHA固定でキャッシュ（変わらなければ小さな問い合わせのみで再DL回避。resolve は no-store で 304 不可のため）。
   Actions での辞書処理は廃止（`release-dict.yml` 削除）。辞書差し替え時のみ hf CLI で上げ直し `DICT_REVISION` 更新。
-- **リリース**: **v0.3.0 まで JSR 公開済み**（v0.3.0 = 2026-07-10。golden-3k 回帰配線・型境界
-  バリデータ等の fail-loud 強化・`segmentPhrases` 公開・`/format` 死にコード除去・本家照合6点の決着。
-  v0.2.0 = 2026-07-09。SBV2削除・`/format`分離・ドメイン別サブパス再編＝
-  [0002](docs/decisions/0002-public-api-surface.md)・HF配布/gzip=
-  [0003](docs/decisions/0003-dict-distribution.md)）。
-  **v0.4.0 準備済み（タグ/公開待ち）**: light-sbv2 のフィードバック対応 — 実在記号の公開
-  （`punctuations` / `leadingPunctuations`＝[0005](docs/decisions/0005-punctuation-exposure.md)、
+- **リリース**: **v0.4.0 まで JSR 公開済み**（v0.4.0 = 2026-07-10。light-sbv2 フィードバック対応 —
+  実在記号の公開（`punctuations` / `leadingPunctuations`＝[0005](docs/decisions/0005-punctuation-exposure.md)、
   `wordPhoneAlignment` 実記号化・`pausePunct` 削除）・ン/ッ の `Mora.consonant` undefined 正規化・
-  モーラ表 ヵ 追加（limitations 記載の意図的オラクル逸脱）・ローダの `@hdae/fetch-cache` 委譲＋
-  `./browser`→`./loader` 改名（[0006](docs/decisions/0006-loader-on-fetch-cache.md)）。
+  モーラ表 ヵ 追加・ローダの `@hdae/fetch-cache` 委譲＋`./browser`→`./loader` 改名＝
+  [0006](docs/decisions/0006-loader-on-fetch-cache.md)。依存クールダウンは同一オーナー除外で通過。
+  v0.3.0 = 2026-07-10（golden-3k 回帰配線・fail-loud 強化・本家照合6点の決着）。v0.2.0 = 2026-07-09
+  （SBV2削除・サブパス再編＝[0002](docs/decisions/0002-public-api-surface.md)・HF配布/gzip=
+  [0003](docs/decisions/0003-dict-distribution.md)）。
+  **次版（0.4.1 or 0.5.0）**: fetch-cache に decode フックが入り次第、ローダの二重解凍を一本化して
+  リリースする方針（[src/loader/mod.ts](src/loader/mod.ts) の NOTE）。
 - **辞書ローダの専用パッケージ化**: 完了（[0006](docs/decisions/0006-loader-on-fetch-cache.md)）。
   汎用部分はオーナーの `@hdae/fetch-cache` として実現され、`./loader` はその上の辞書固有層
   （gzip 解凍・JTD1 CRC 検証）になった。fetch-cache に decode フックが入ったら二重解凍を一本化する
