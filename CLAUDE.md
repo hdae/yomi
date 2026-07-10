@@ -76,8 +76,9 @@
   v0.3.0 = 2026-07-10（golden-3k 回帰配線・fail-loud 強化・本家照合6点の決着）。v0.2.0 = 2026-07-09
   （SBV2削除・サブパス再編＝[0002](docs/decisions/0002-public-api-surface.md)・HF配布/gzip=
   [0003](docs/decisions/0003-dict-distribution.md)）。
-  **v0.4.1（準備済み・タグ/Release はユーザー実施待ち）**: fetch-cache 0.2.0 の decode フックで
-  ローダの二重解凍を一本化（外形 API 不変・依存 floor は `^0.2.0` へ）。
+  **v0.4.1（準備済み・タグ/Release はユーザー実施待ち）**: fetch-cache の decode フックで
+  ローダの二重解凍を一本化し、single-flight で並行辞書 DL の重複（旧 W-E-7）も解消
+  （外形 API 不変・依存 floor は `^0.3.0` へ）。
 - **辞書ローダの専用パッケージ化**: 完了（[0006](docs/decisions/0006-loader-on-fetch-cache.md)）。
   汎用部分はオーナーの `@hdae/fetch-cache` として実現され、`./loader` はその上の辞書固有層
   （gzip 解凍・JTD1 CRC 検証）になった。二重解凍も fetch-cache 0.2.0 の decode フックへの
