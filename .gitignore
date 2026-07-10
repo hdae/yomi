@@ -22,6 +22,3 @@ data/
 # 生成される JTD1 辞書（~19MB, Release アセット配布）。golden-3k.jsonl は committed。
 fixtures/naist-jdic.jtd
 
-# Release ワークフローがアセット名（naist-jdic-<version>.jtd）に合わせて repo 直下に作る
-# versioned コピー。これを無視しないと deno publish が dirty working tree で落ちる。
-/naist-jdic-*.jtd
