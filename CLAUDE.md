@@ -76,12 +76,12 @@
   v0.3.0 = 2026-07-10（golden-3k 回帰配線・fail-loud 強化・本家照合6点の決着）。v0.2.0 = 2026-07-09
   （SBV2削除・サブパス再編＝[0002](docs/decisions/0002-public-api-surface.md)・HF配布/gzip=
   [0003](docs/decisions/0003-dict-distribution.md)）。
-  **次版（0.4.1 or 0.5.0）**: fetch-cache に decode フックが入り次第、ローダの二重解凍を一本化して
-  リリースする方針（[src/loader/mod.ts](src/loader/mod.ts) の NOTE）。
+  **v0.4.1（準備済み・タグ/Release はユーザー実施待ち）**: fetch-cache 0.2.0 の decode フックで
+  ローダの二重解凍を一本化（外形 API 不変・依存 floor は `^0.2.0` へ）。
 - **辞書ローダの専用パッケージ化**: 完了（[0006](docs/decisions/0006-loader-on-fetch-cache.md)）。
   汎用部分はオーナーの `@hdae/fetch-cache` として実現され、`./loader` はその上の辞書固有層
-  （gzip 解凍・JTD1 CRC 検証）になった。fetch-cache に decode フックが入ったら二重解凍を一本化する
-  （[src/loader/mod.ts](src/loader/mod.ts) の NOTE。フィードバック提出済み）。
+  （gzip 解凍・JTD1 CRC 検証）になった。二重解凍も fetch-cache 0.2.0 の decode フックへの
+  一本化で解消済み（0006 の帰結参照）。
 - **その後（任意・要検討維持、v0.3.0 には含めない）**: 辞書のオンディスク再エンコードでさらに軽量化。
   実測により **LEXI 索引3本の delta+varint 化と rightId 派生化のみ有効**（gzip 配布サイズ
   ~7.6→~4.9MiB）。CONN 行 dedup（1377 行中 1342 行がユニーク）と READ かなパック（gzip 後 0.07MiB

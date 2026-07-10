@@ -88,13 +88,15 @@ const gunzip = async (gz: Uint8Array): Promise<Uint8Array<ArrayBuffer>> => {
 };
 
 /**
- * 取得アーティファクト（gzip または生 JTD1）を検証済み JTD1 の ArrayBuffer にする。
- * 先頭バイトで gzip を自動判定し、gzip なら解凍してから CRC 検証する。破損・解凍失敗は throw。
+ * `fetchBytes` の decode フック: 取得アーティファクト（gzip または生 JTD1）を検証済み JTD1 に
+ * 変換する。先頭バイトで gzip を自動判定し、gzip なら解凍してから CRC 検証する。throw は
+ * fetch-cache 側で「破損」として扱われる（キャッシュ由来は evict → 真実源から取り直す self-heal、
+ * network 由来はそのまま throw・キャッシュしない）。cache に入るのは常に保存形（gzip のまま＝小さい）。
  */
-const materialize = async (raw: Uint8Array): Promise<ArrayBuffer> => {
+const decodeJtd = async (raw: Uint8Array): Promise<Uint8Array<ArrayBuffer>> => {
   const jtd = isGzip(raw) ? await gunzip(raw) : new Uint8Array(raw);
   verifyJtd(jtd);
-  return jtd.buffer;
+  return jtd;
 };
 
 /**
@@ -113,21 +115,19 @@ const fetchVerifiedBuffer = async (opts: GetDictionaryOptions): Promise<ArrayBuf
     : rawRevision;
   const requestUrl = (opts.url ?? DICT_URL).replace(/\{revision\}/g, revision);
 
-  // 不変 SHA のみキャッシュ（url 上書き＋可変 ref のときだけ非キャッシュ）。validate は
-  // キャッシュ・network の両経路に適用され、解凍不能・CRC 不一致は「破損」として
-  // キャッシュなら evict → 真実源から再取得、network ならそのまま throw（fetch-cache 側の契約）。
-  const raw = await fetchBytes(requestUrl, {
+  // 不変 SHA のみキャッシュ（url 上書き＋可変 ref のときだけ非キャッシュ）。解凍と CRC 検証は
+  // decode に一本化され、キャッシュ・network の両経路で 1 回だけ走る。解凍不能・CRC 不一致は
+  // 「破損」としてキャッシュなら evict → 真実源から再取得、network ならそのまま throw・
+  // キャッシュしない（fetch-cache 側の契約）。
+  const jtd = await fetchBytes(requestUrl, {
     cacheName: opts.cacheName ?? DEFAULT_CACHE_NAME,
     cache: isCommitSha(revision),
-    validate: async (bytes) => {
-      await materialize(bytes);
-    },
+    decode: decodeJtd,
     onProgress: opts.onProgress,
   });
-  // NOTE: validate 内で一度解凍済みだが、fetchBytes は取得物（gzip）をそのまま返すため
-  // ここでもう一度解凍する（二重解凍・数十ms・受容済み）。fetch-cache に decode フックが
-  // 入ったら validate と戻り値を一本化する（docs/decisions/0006）。
-  return await materialize(raw);
+  // decodeJtd は全長・専有の ArrayBuffer 背面を返すが、fetchBytes の戻り型ではそれが消える。
+  // instanceof で背面型を復元する（偽側はコピーで総称的に安全 — 実行時には到達しない）。
+  return jtd.buffer instanceof ArrayBuffer ? jtd.buffer : new Uint8Array(jtd).buffer;
 };
 
 /**

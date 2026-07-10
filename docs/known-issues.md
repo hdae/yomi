@@ -13,9 +13,11 @@ open な問題・作業待ちの項目。意図的な制約は [limitations.md](
 - 可変 ref（`"main"`）の SHA 解決がオフライン/HF 障害で失敗すると、有効な SHA 固定キャッシュが
   あっても throw する（W-E-6。last-known-SHA フォールバック無し。`resolveHfRevision` も失敗時
   throw なので fetch-cache 委譲では解消しない）。
-- 並行呼び出し（同時 `getDictionary`）の重複 DL 抑止・テストが無い（W-E-7 残件）。
-- 二重解凍（validate で1回＋戻り値でもう1回）。fetch-cache への decode フック提案が入り次第
-  一本化する（[src/loader/mod.ts](../src/loader/mod.ts) の NOTE）。
+- 並行呼び出し（同時 `getDictionary`）の重複 DL 抑止・テストが無い（W-E-7 残件。
+  fetch-cache 側で single-flight が計画済み — 入り次第この項を見直す）。
+
+（解消: 二重解凍は fetch-cache 0.2.0 の `decode` フックへの一本化で解決した —
+[decisions/0006](decisions/0006-loader-on-fetch-cache.md) の帰結を参照。）
 
 ## 解決済みの照合（記録）
 

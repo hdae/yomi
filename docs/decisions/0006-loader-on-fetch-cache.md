@@ -46,9 +46,10 @@
   （`resolveHfRevision` も失敗時 throw）— known-issues に引き続き記録。
 - キャッシュ I/O まわり（quota / open 失敗 / put 失敗 / `caches` 不在）のテスト責務は
   fetch-cache 側に移った。yomi 側テストはローダの外形契約（URL 形・解凍・CRC・self-heal 連携）を縛る。
-- **二重解凍を受容**: fetch-cache の `validate` は取得物（gzip）に対して走るため、検証で一度
-  解凍した後、戻り値（gzip のまま）をもう一度解凍している（+数十ms/呼び出し）。fetch-cache に
-  decode フック（cache には生を保存・戻り値は decode+validate 済み）を提案済みで、入り次第
-  一本化する（[src/loader/mod.ts](../../src/loader/mod.ts) の NOTE）。
+- **二重解凍を受容** → **解消済み**: 当初、fetch-cache の `validate` は取得物（gzip）に対して
+  走るため、検証で一度解凍した後、戻り値（gzip のまま）をもう一度解凍していた（+数十ms/呼び出し）。
+  fetch-cache 0.2.0 が `decode` フック（cache には raw を保存・戻り値は decode 適用後・throw は
+  破損扱い）を出荷したため、ローダの解凍+CRC 検証を `decode` に一本化した（解凍は両経路とも
+  1 回だけ。保存形が gzip のままという性質は不変）。
 - 破壊的変更: import パスが `@hdae/yomi/browser` → `@hdae/yomi/loader` に変わる。互換 alias は
   置かない（pre-v1・fail loudly）。
