@@ -36,6 +36,15 @@ Deno.test("長音ー・促音ッ・撥音ンの特殊音素", () => {
   assert(moras[3].consonant === "N" && moras[3].vowel === "N", "ン: 撥音");
 });
 
+Deno.test("小書きカ行（ヵ・ヶ）は k 子音のモーラになる（ヵ は本家に無い意図的拡張）", () => {
+  // ヶ は jpreprocess mora_dict.rs 由来、ヵ は yomi の意図的拡張（docs/limitations.md）。
+  const { moras, unparseable } = splitMoras("ヵヶ");
+  assert(moras.length === 2, `モーラ数: ${moras.length}`);
+  assert(moras[0].kana === "ヵ" && moras[0].consonant === "k" && moras[0].vowel === "a", "ヵ=ka");
+  assert(moras[1].kana === "ヶ" && moras[1].consonant === "k" && moras[1].vowel === "e", "ヶ=ke");
+  assert(unparseable.length === 0, "unparseable は空");
+});
+
 Deno.test("ヴ系（外来音）は2文字拗音・1文字とも正しく分割される", () => {
   const { moras } = splitMoras("ヴァヴィヴヴェヴォヴュ");
   assert(moras.length === 6, `モーラ数: ${moras.length}`);

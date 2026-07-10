@@ -340,6 +340,8 @@ const ONE_CHAR_ENTRIES: readonly MoraTableEntry[] = [
   { key: "ヲ", expansion: [{ kana: "ヲ", consonant: null, vowel: "o" }] },
   { key: "ン", expansion: [{ kana: "ン", consonant: "N", vowel: "N" }] },
   { key: "ヴ", expansion: [{ kana: "ヴ", consonant: "v", vowel: "u" }] },
+  // ヵ は本家（jpreprocess mora_dict.rs）に無い意図的拡張（docs/limitations.md 参照）。
+  { key: "ヵ", expansion: [{ kana: "ヵ", consonant: "k", vowel: "a" }] },
   { key: "ヶ", expansion: [{ kana: "ヶ", consonant: "k", vowel: "e" }] },
   { key: "ー", expansion: [{ kana: "ー", consonant: "-", vowel: "long" }] },
   // 全角アルファベット（1キー=複数モーラ）。小文字・大文字とも同じ展開。
