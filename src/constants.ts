@@ -6,7 +6,7 @@
  * リリース時は scripts/verify_tag.ts が、通常時は scripts/version_sync.test.ts が
  * 公開 VERSION === deno.jsonc.version を fail-loud で検証する（drift 検出）。
  */
-export const VERSION = "0.4.0";
+export const VERSION = "0.4.1";
 
 /**
  * 既定辞書の HF リビジョン（辞書リポ `hdae/yomi-dict` のコミット SHA）。
