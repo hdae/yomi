@@ -17,6 +17,7 @@ import {
 } from "../format/layout.ts";
 import { crc32Hex } from "../format/crc32.ts";
 import type { CharCategoryInfo, DictMeta } from "./types.ts";
+import { validateDictMeta } from "./validate.ts";
 
 /** JTD1 コンテナから読み込んだランタイム辞書オブジェクト（全列ゼロコピー参照）。 */
 export class JtdDictionary {
@@ -120,9 +121,10 @@ export class JtdDictionary {
     const c = new JtdContainer(buf);
 
     const metaSec = c.section("META");
-    const meta = JSON.parse(
+    // JSON.parse の結果は構造検証してから使う（破損 META を `as` で黙って通さない）。
+    const meta = validateDictMeta(JSON.parse(
       new TextDecoder().decode(new Uint8Array(buf, metaSec.offset, metaSec.length)),
-    ) as DictMeta;
+    ));
 
     if (opts?.verifyChecksums !== false) {
       for (const [name, expected] of Object.entries(meta.checksums)) {

@@ -11,6 +11,7 @@ import type { JtdDictionary } from "./dictionary.ts";
 import type { OverlayEntry, ResolvedOverlayEntry } from "./types.ts";
 import { normalizeForDict } from "../text/normalize.ts";
 import { splitMorasWithRanges } from "../text/mora_table.ts";
+import { validateOverlayEntries } from "./validate.ts";
 
 const DEFAULT_POS = ["名詞", "固有名詞", "一般"] as const;
 const DEFAULT_COST = -10000;
@@ -113,9 +114,7 @@ const resolveContextIds = (
   throw new Error(`overlay: 品詞 [${pos.join(",")}] の代表エントリが見つからない`);
 };
 
-/** JSON 文字列からの構築（ファイル/ネットワーク経由のロード用）。 */
+/** JSON 文字列からの構築（ファイル/ネットワーク経由のロード用）。構造検証つき（fail loud）。 */
 export const loadOverlay = (dict: JtdDictionary, json: string): OverlayDictionary => {
-  const parsed = JSON.parse(json);
-  if (!Array.isArray(parsed)) throw new Error("overlay: JSON はエントリ配列であること");
-  return new OverlayDictionary(dict, parsed as OverlayEntry[]);
+  return new OverlayDictionary(dict, validateOverlayEntries(JSON.parse(json)));
 };
