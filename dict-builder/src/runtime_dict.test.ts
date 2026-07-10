@@ -80,7 +80,14 @@ const CHAR_DEF_NO_DEFAULT = [
   "0x4E00..0x9FFF KANJI",
 ].join("\n") + "\n";
 
-const UNK_DEF = "DEFAULT,1,1,1000,記号,一般,*,*,*,*,*\n";
+// 全カテゴリに1行以上置く（build 時アサート「unk.def 0行カテゴリ禁止」の前提。
+// lattice の unknownWordEnd ガードが lindera と等挙動になる辞書不変条件）。
+const UNK_DEF = [
+  "DEFAULT,1,1,1000,記号,一般,*,*,*,*,*",
+  "KANJI,2,3,2000,名詞,一般,*,*,*,*,*",
+  "HIRAGANA,4,5,2500,名詞,一般,*,*,*,*,*",
+  "KATAKANA,6,7,3000,名詞,一般,*,*,*,*,*",
+].join("\n") + "\n";
 
 const MATRIX_DEF = buildMatrixText();
 
@@ -281,6 +288,21 @@ Deno.test("char.def: DEFAULT カテゴリ欠落は build 時に fail loud（pars
       }),
     "DEFAULT",
     "DEFAULT 欠落 char.def",
+  );
+});
+
+Deno.test("unk.def: 0行カテゴリは build 時に fail loud（unknownWordEnd ガードの静かな乖離を防ぐ）", () => {
+  assertThrows(
+    () =>
+      buildDictionary({
+        csv: CSV,
+        matrixDef: MATRIX_DEF,
+        charDef: CHAR_DEF,
+        unkDef: "DEFAULT,1,1,1000,記号,一般,*,*,*,*,*\n", // KANJI/HIRAGANA/KATAKANA が0行
+        license: "TEST-LICENSE",
+      }),
+    "KANJI",
+    "unk.def 0行カテゴリ",
   );
 });
 

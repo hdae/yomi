@@ -147,6 +147,20 @@ export const buildDictionary = (src: {
       posId: posInterner.intern(featureKey(r.features)),
     });
   }
+  // MUST: 全カテゴリに未知語生成規則が1行以上あること。0 行カテゴリはランタイムの
+  // unknownWordEnd 更新ガード（rTo > rFrom）を偽にし、lindera（行数に関わらず無条件前進）と
+  // 静かに乖離する（docs/limitations.md の lindera 節）。naist-jdic は全カテゴリ ≥1 行を
+  // 満たすため、満たさない辞書ソースへの差し替えはここで露見させる。
+  unkByCat.forEach((records, cid) => {
+    if (records.length === 0) {
+      throw new Error(
+        `unk.def にカテゴリ ${
+          charDef.categories[cid].name
+        } の行が無い（0行カテゴリは未知語処理が lindera と乖離する。docs/limitations.md 参照）`,
+      );
+    }
+  });
+
   const unkCatIndex: number[] = [0];
   const unkLeft: number[] = [];
   const unkRight: number[] = [];
