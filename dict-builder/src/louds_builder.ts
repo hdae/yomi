@@ -1,5 +1,5 @@
 // ソート済み表層形リスト → LOUDS トライの各配列を構築する。
-// 符号化契約は packages/frontend/src/louds.ts の冒頭コメントを正とする。
+// 符号化契約は src/format/louds.ts の冒頭コメントを正とする。
 
 import { BitWriter } from "@hdae/yomi/format";
 

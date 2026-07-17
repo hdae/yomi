@@ -32,7 +32,11 @@ export type CharCategoryInfo = {
   invoke: boolean;
   /** true なら同カテゴリの連続文字を1語にまとめる候補を出す。 */
   group: boolean;
-  /** 生成する未知語候補の文字数（0 = 生成しない）。 */
+  /**
+   * char.def の LENGTH 値をそのまま保持する。MeCab では未知語候補の最大文字数だが、
+   * 本実装のランタイム未知語生成（src/tokenizer/lattice.ts）はこの値を読まず、候補長は
+   * 1文字（group=false）または同カテゴリ連続の最大長（group=true）に固定する（lindera 互換で未使用）。
+   */
   length: number;
 };
 
