@@ -1,6 +1,6 @@
 // JTD1 コンテナの書き手: セクション列 → 1つの Uint8Array。
-// セクション内レイアウトは frontend の computeLayout を共有する（オフセット計算の
-// 二重実装禁止）。読み手は src/format/reader.ts + src/format/layout.ts。
+// セクション内レイアウトは @hdae/yomi/format の computeLayout を共有する（オフセット
+// 計算の二重実装禁止）。読み手は src/format/reader.ts + src/format/layout.ts。
 
 import {
   computeLayout,

@@ -7,7 +7,10 @@ export type CharCategory = {
   name: string;
   invoke: 0 | 1; // 1 = 既知語があっても常に未知語処理を起動
   group: 0 | 1; // 1 = 同カテゴリ連続文字を1語に束ねる候補を出す
-  length: number; // 1..n 文字の未知語候補を出す（0 = 出さない）
+  // char.def の LENGTH 値そのまま（コンテナへ素通しで保存する）。MeCab では未知語候補の
+  // 最大文字数だが、ランタイムの未知語生成は読まない（lindera 互換で未使用 —
+  // src/dict/types.ts CharCategoryInfo.length 参照）。
+  length: number;
 };
 
 export type CharDef = {
