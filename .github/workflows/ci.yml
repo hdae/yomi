@@ -23,6 +23,13 @@ jobs:
       - run: deno lint
       - run: deno check .
 
+      # 公開シンボルの JSDoc を強制（全 exports エントリポイント・ADR-0002）。
+      - run: deno doc --lint src/mod.ts src/text/mod.ts src/dict/mod.ts src/tokenizer/mod.ts src/njd/mod.ts src/g2p/mod.ts src/format/mod.ts src/loader/mod.ts
+
+      # dict-builder（root exclude 対象・別 config）を自身の config で型検査＋テスト（辞書不要）。
+      - run: deno check --config dict-builder/deno.json dict-builder/
+      - run: deno test --config dict-builder/deno.json dict-builder/
+
       # 辞書ソース（naist-jdic v0.1.3, ~19MB）を Actions Cache に保存し、GitHub からの
       # 再ダウンロードを避ける。key は fetch_dict.ts のハッシュ＝SHA-256 pin が変われば自動失効。
       # ヒット時も後段の fetch_dict が checksum を再検証するので破損は self-healing（再取得）。

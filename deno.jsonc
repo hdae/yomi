@@ -20,7 +20,9 @@
   // 除外が無いと fetch-cache 更新→即 yomi リリースのフローが毎回 24h 待ちで CI の publish に落ちる）。
   "minimumDependencyAge": { "exclude": ["jsr:@hdae/fetch-cache"] },
   "tasks": {
-    "check": "deno fmt --check && deno lint && deno check . && deno test --allow-read --allow-env",
+    // 公開パッケージ src/: fmt/lint/型/公開シンボルの JSDoc（doc --lint は全 exports エントリポイント）/テスト。
+    // 続けて dict-builder（root exclude 対象・別 config）を自身の config で型検査＋テスト（辞書不要・追加権限なしで通る）。
+    "check": "deno fmt --check && deno lint && deno check . && deno doc --lint src/mod.ts src/text/mod.ts src/dict/mod.ts src/tokenizer/mod.ts src/njd/mod.ts src/g2p/mod.ts src/format/mod.ts src/loader/mod.ts && deno test --allow-read --allow-env && deno check --config dict-builder/deno.json dict-builder/ && deno test --config dict-builder/deno.json dict-builder/",
     // --allow-read: version 焼き込みの drift ガード(version_sync)と実辞書統合テストが読取に使う
     //   （辞書 fixture が無ければ統合テストは skip・ci.yml と同じ権限）。--allow-env: YOMI_DICT_PATH 用。
     "test": "deno test --allow-read --allow-env",
