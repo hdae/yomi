@@ -37,7 +37,7 @@
   },
   "imports": {
     // ./loader の実行時依存（同一オーナー・それ自体ゼロ依存。コアは import しない＝docs/decisions/0006）。
-    "@hdae/fetch-cache": "jsr:@hdae/fetch-cache@^0.3.0",
+    "@hdae/fetch-cache": "jsr:@hdae/fetch-cache@^0.3.1",
     "@hdae/yomi": "./src/mod.ts",
     // dev/CI 用（scripts/ の deno.jsonc 解析）。配布パッケージ src/ は import しない＝実行時依存ゼロは不変。
     "@std/jsonc": "jsr:@std/jsonc@^1.0.2"
