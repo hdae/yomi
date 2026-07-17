@@ -100,3 +100,20 @@ KANJINUMERIC 1 1 0
   assert(unpack(0x4e01).join(",") === "1", "漢字は KANJI のみ");
   assert(unpack(0x41).join(",") === "0", "未定義は DEFAULT");
 });
+
+Deno.test("char.def: カテゴリ定義の数値列が不正なら throw（無検証キャストの防止）", () => {
+  const throws = (line: string, label: string) => {
+    let threw = false;
+    try {
+      parseCharDef(`DEFAULT 0 1 0\n${line}\n`);
+    } catch {
+      threw = true;
+    }
+    assert(threw, `${label} で throw しない`);
+  };
+  throws("KANJI 2 0 0", "INVOKE=2");
+  throws("KANJI x 0 0", "INVOKE 非数");
+  throws("KANJI 0 -1 0", "GROUP=-1");
+  throws("KANJI 0 0 1.5", "LENGTH 非整数");
+  throws("KANJI 0 0 -2", "LENGTH 負値");
+});

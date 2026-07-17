@@ -51,12 +51,25 @@ export const parseCharDef = (text: string): CharDef => {
       if (fields.length !== 4) throw new Error(`カテゴリ定義が4要素でない: ${line}`);
       const [name, invoke, group, length] = fields;
       if (catId.has(name)) throw new Error(`カテゴリ重複: ${name}`);
+      const invokeNum = Number(invoke);
+      const groupNum = Number(group);
+      const lengthNum = Number(length);
+      // 旧実装は無検証キャストで、非数・範囲外が挙動フラグへ素通りしていた（fail loudly）。
+      if (invokeNum !== 0 && invokeNum !== 1) {
+        throw new Error(`INVOKE が 0/1 でない: ${line}`);
+      }
+      if (groupNum !== 0 && groupNum !== 1) {
+        throw new Error(`GROUP が 0/1 でない: ${line}`);
+      }
+      if (!Number.isInteger(lengthNum) || lengthNum < 0) {
+        throw new Error(`LENGTH が非負整数でない: ${line}`);
+      }
       catId.set(name, categories.length);
       categories.push({
         name,
-        invoke: Number(invoke) as 0 | 1,
-        group: Number(group) as 0 | 1,
-        length: Number(length),
+        invoke: invokeNum,
+        group: groupNum,
+        length: lengthNum,
       });
     }
   }
@@ -110,11 +123,27 @@ export const parseUnkDef = (text: string): UnkRecord[] => {
     if (line.length === 0) continue;
     const f = line.split(",");
     if (f.length !== 11) throw new Error(`unk.def の列数が11でない: ${line}`);
+    const leftId = Number(f[1]);
+    const rightId = Number(f[2]);
+    const cost = Number(f[3]);
+    // 語彙 CSV 側（build.ts）と対称の範囲検証。ランタイムの matrix 添字は検証せずに
+    // 信じるため、範囲外 ID を素通しすると別セルの連接コストを黙って読む事故になる
+    // （0 は BOS/EOS 予約）。naist-jdic では発火しないが、辞書ソース差し替え
+    // （pyopenjtalk-plus 化）のときここで露見させる。
+    if (!Number.isInteger(leftId) || leftId <= 0 || leftId >= CONTEXT_ID_DIMENSION) {
+      throw new Error(`unk.def の leftId が範囲外: ${line}`);
+    }
+    if (!Number.isInteger(rightId) || rightId <= 0 || rightId >= CONTEXT_ID_DIMENSION) {
+      throw new Error(`unk.def の rightId が範囲外: ${line}`);
+    }
+    if (!Number.isInteger(cost) || cost < -32768 || cost > 32767) {
+      throw new Error(`unk.def の cost が i16 範囲外: ${line}`);
+    }
     records.push({
       category: f[0],
-      leftId: Number(f[1]),
-      rightId: Number(f[2]),
-      cost: Number(f[3]),
+      leftId,
+      rightId,
+      cost,
       features: [f[4], f[5], f[6], f[7], f[8], f[9]],
     });
   }

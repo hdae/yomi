@@ -141,6 +141,20 @@ Deno.test("unk.def: カテゴリ行が入力順どおりに全フィールド保
   );
 });
 
+Deno.test("unk.def: 数値列の範囲外・非数は throw（語彙 CSV 側 build.ts と対称の検証）", () => {
+  const row = (leftId: string, rightId: string, cost: string) =>
+    `KANJI,${leftId},${rightId},${cost},名詞,一般,*,*,*,*,*`;
+  // 0 は BOS/EOS 予約、DIM 以上は matrix 添字の範囲外（別セルを黙って読む事故の元）。
+  assertThrows(() => parseUnkDef(row("0", "22", "-33")), "leftId が範囲外", "leftId=0");
+  assertThrows(() => parseUnkDef(row(`${DIM}`, "22", "-33")), "leftId が範囲外", `leftId=${DIM}`);
+  assertThrows(() => parseUnkDef(row("11", "x", "-33")), "rightId が範囲外", "rightId 非数");
+  assertThrows(() => parseUnkDef(row("11", "22", "40000")), "cost が i16 範囲外", "cost 上限超過");
+  assertThrows(() => parseUnkDef(row("11", "22", "1.5")), "cost が i16 範囲外", "cost 非整数");
+  // 境界値は通る。
+  const ok = parseUnkDef(row("1", `${DIM - 1}`, "-32768"));
+  assert(ok[0].leftId === 1 && ok[0].rightId === DIM - 1 && ok[0].cost === -32768, "境界値が通らない");
+});
+
 Deno.test("unk.def: 列数が11でなければ throw", () => {
   // 10列（末尾 col10 欠落）。
   assertThrows(
