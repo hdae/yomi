@@ -68,7 +68,7 @@
   パッケージ版と独立）。不変 SHA はキャッシュ。`revision: "main"` 等の可変 ref は HF revision API で現在 SHA を
   解決→SHA固定でキャッシュ（変わらなければ小さな問い合わせのみで再DL回避。resolve は no-store で 304 不可のため）。
   Actions での辞書処理は廃止（`release-dict.yml` 削除）。辞書差し替え時のみ hf CLI で上げ直し `DICT_REVISION` 更新。
-- **リリース**: **v0.4.1 まで JSR 公開済み**（v0.4.0 = 2026-07-10。light-sbv2 フィードバック対応 —
+- **リリース**: **v0.4.2 まで JSR 公開済み**（v0.4.0 = 2026-07-10。light-sbv2 フィードバック対応 —
   実在記号の公開（`punctuations` / `leadingPunctuations`＝[0005](docs/decisions/0005-punctuation-exposure.md)、
   `wordPhoneAlignment` 実記号化・`pausePunct` 削除）・ン/ッ の `Mora.consonant` undefined 正規化・
   モーラ表 ヵ 追加・ローダの `@hdae/fetch-cache` 委譲＋`./browser`→`./loader` 改名＝
@@ -78,6 +78,8 @@
   [0003](docs/decisions/0003-dict-distribution.md)）。
   v0.4.1 = 2026-07-10（fetch-cache の decode フックでローダの二重解凍を一本化し、
   single-flight で並行辞書 DL の重複（旧 W-E-7）も解消。外形 API 不変・依存 floor は `^0.3.0` へ）。
+  v0.4.2 = 2026-07-18（公開 API・G2P 出力とも不変のパッチ。fetch-cache floor `^0.3.1` 追随・
+  dict-builder の unk.def / char.def 数値範囲検証・dict-builder 検査と doc --lint の CI 配線・JSDoc 訂正）。
 - **辞書ローダの専用パッケージ化**: 完了（[0006](docs/decisions/0006-loader-on-fetch-cache.md)）。
   汎用部分はオーナーの `@hdae/fetch-cache` として実現され、`./loader` はその上の辞書固有層
   （gzip 解凍・JTD1 CRC 検証）になった。二重解凍も fetch-cache 0.2.0 の decode フックへの
